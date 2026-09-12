@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="SPIDER-LINK — an original futuristic wearable technology ecosystem."
+    >
+
+    <meta
+        name="theme-color"
+        content="#050505"
+    >
+
+    <title>SPIDER-LINK — Wear the Interface</title>
+
+    <!-- KEEP YOUR EXISTING FAVICON -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =====================================================
+         SPLASH SCREEN
+    ====================================================== -->
+
+    <div class="splash-screen" id="splashScreen">
+
+        <div class="splash-grid"></div>
+        <div class="splash-scan"></div>
+
+        <div class="splash-content">
+
+            <div class="splash-logo">
+                <div class="splash-ring splash-ring-outer"></div>
+                <div class="splash-ring splash-ring-inner"></div>
+
+                <div class="splash-core">
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="splash-brand">
+                SPIDER-LINK
+            </div>
+
+            <div class="splash-subtitle">
+                FUTURISTIC WEARABLE TECHNOLOGY
+            </div>
+
+            <div class="splash-status" id="splashStatus">
+                INITIALIZING SYSTEM
+            </div>
+
+            <div class="splash-progress">
+                <div
+                    class="splash-progress-bar"
+                    id="splashProgressBar"
+                ></div>
+            </div>
+
+            <div
+                class="splash-percent"
+                id="splashPercent"
+            >
+                0%
+            </div>
+
+            <div class="splash-details">
+
+                <span>
+                    SYSTEM
+                    <strong>ONLINE</strong>
+                </span>
+
+                <span>
+                    CORE
+                    <strong>READY</strong>
+                </span>
+
+                <span>
+                    LINK
+                    <strong>SYNCING</strong>
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="splash-corner splash-corner-tl"></div>
+        <div class="splash-corner splash-corner-tr"></div>
+        <div class="splash-corner splash-corner-bl"></div>
+        <div class="splash-corner splash-corner-br"></div>
+
+    </div>
+
+
+    <!-- =====================================================
+         BACKGROUND EFFECTS
+    ====================================================== -->
+
+    <div class="background-grid"></div>
+    <div class="background-scanlines"></div>
+
+
+    <!-- =====================================================
+         NAVIGATION
+    ====================================================== -->
+
+    <header class="navbar">
+
+        <a
+            href="#home"
+            class="logo"
+            aria-label="SPIDER-LINK Home"
+        >
+            <span class="logo-mark">✦</span>
+            <span class="logo-text">SPIDER-LINK</span>
+        </a>
+
+        <nav class="nav-links">
+
+            <a href="#home">HOME</a>
+            <a href="#mask">MASK</a>
+            <a href="#hud">HUD</a>
+            <a href="#suits">SUITS</a>
+            <a href="#ai">AI</a>
+            <a href="#system">SYSTEM</a>
+
+        </nav>
+
+        <div class="system-status">
+
+            <span class="status-dot"></span>
+
+            <span>
+                SYSTEM
+                <strong>ONLINE</strong>
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main>
+
+
+        <!-- =================================================
+             HERO
+        ================================================== -->
+
+        <section
+            class="hero section"
+            id="home"
+        >
+
+            <div class="hero-content">
+
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    WEARABLE TECHNOLOGY / 01
+                </div>
+
+                <h1>
+                    WEAR THE
+                    <span>INTERFACE.</span>
+                </h1>
+
+                <p class="hero-description">
+                    SPIDER-LINK is an original futuristic wearable
+                    technology ecosystem built around intelligent
+                    masks, customizable HUDs, synchronized systems,
+                    programmable expressions, and experimental
+                    human-computer interaction.
+                </p>
+
+                <div class="hero-actions">
+
+                    <a
+                        href="#mask"
+                        class="button button-primary"
+                    >
+                        EXPLORE SYSTEM
+                    </a>
+
+                    <a
+                        href="#suits"
+                        class="button button-secondary"
+                    >
+                        VIEW SUITS
+                    </a>
+
+                </div>
+
+                <div class="hero-meta">
+
+                    <div>
+                        <span>VERSION</span>
+                        <strong>0.1.0</strong>
+                    </div>
+
+                    <div>
+                        <span>STATUS</span>
+                        <strong>EXPERIMENTAL</strong>
+                    </div>
+
+                    <div>
+                        <span>AI</span>
+                        <strong id="heroAIName">UNCONFIGURED</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="hero-visual">
+
+                <div class="hero-orbit orbit-one"></div>
+                <div class="hero-orbit orbit-two"></div>
+                <div class="hero-orbit orbit-three"></div>
+
+                <div class="hero-core">
+
+                    <div class="core-ring"></div>
+
+                    <div class="core-symbol">
+                        ✦
+                    </div>
+
+                    <span class="core-label">
+                        LINK CORE
+                    </span>
+
+                </div>
+
+                <div class="hero-floating-card card-top">
+                    <span>LINK</span>
+                    <strong>CONNECTED</strong>
+                </div>
+
+                <div class="hero-floating-card card-bottom">
+                    <span>SUIT</span>
+                    <strong id="heroSuitName">CLASSIC</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SYSTEM STATUS
+        ================================================== -->
+
+        <section
+            class="section system-section"
+            id="system"
+        >
+
+            <div class="section-heading">
+
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    SYSTEM / 02
+                </div>
+
+                <h2>
+                    EVERYTHING
+                    <span>CONNECTED.</span>
+                </h2>
+
+                <p>
+                    One ecosystem. Multiple wearable systems.
+                    Designed to communicate as one interface.
+                </p>
+
+            </div>
+
+
+            <div class="system-grid">
+
+                <article class="system-card">
+
+                    <div class="system-card-number">
+                        01
+                    </div>
+
+                    <div class="system-card-icon">
+                        ◉
+                    </div>
+
+                    <h3>SMART MASK</h3>
+
+                    <p>
+                        Programmable eyes, sensors, audio,
+                        camera support, and wearable controls.
+                    </p>
+
+                    <span class="system-card-status">
+                        READY
+                    </span>
+
+                </article>
+
+
+                <article class="system-card">
+
+                    <div class="system-card-number">
+                        02
+                    </div>
+
+                    <div class="system-card-icon">
+                        ⌁
+                    </div>
+
+                    <h3>HUD</h3>
+
+                    <p>
+                        A configurable interface for system
+                        information, modes, telemetry, and alerts.
+                    </p>
+
+                    <span class="system-card-status">
+                        READY
+                    </span>
+
+                </article>
+
+
+                <article class="system-card">
+
+                    <div class="system-card-number">
+                        03
+                    </div>
+
+                    <div class="system-card-icon">
+                        AI
+                    </div>
+
+                    <h3>PERSONAL AI</h3>
+
+                    <p>
+                        A customizable onboard assistant designed
+                        to communicate with the SPIDER-LINK ecosystem.
+                    </p>
+
+                    <span class="system-card-status">
+                        CONFIGURABLE
+                    </span>
+
+                </article>
+
+
+                <article class="system-card">
+
+                    <div class="system-card-number">
+                        04
+                    </div>
+
+                    <div class="system-card-icon">
+                        ↯
+                    </div>
+
+                    <h3>PHONE LINK</h3>
+
+                    <p>
+                        A companion interface for configuration,
+                        synchronization, and system monitoring.
+                    </p>
+
+                    <span class="system-card-status">
+                        SYNC READY
+                    </span>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SMART MASK
+        ================================================== -->
+
+        <section
+            class="section mask-section"
+            id="mask"
+        >
+
+            <div class="section-heading">
+
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    SMART MASK / 03
+                </div>
+
+                <h2>
+                    THE MASK
+                    <span>IS ALIVE.</span>
+                </h2>
+
+                <p>
+                    A conceptual wearable interface combining
+                    programmable expressions, audio, sensors,
+                    and a futuristic visual system.
+                </p>
+
+            </div>
+
+
+            <div class="mask-layout">
+
+                <div class="mask-display">
+
+                    <div class="mask-frame">
+
+                        <div class="mask-eye left">
+                            <div class="eye-glow"></div>
+                        </div>
+
+                        <div class="mask-eye right">
+                            <div class="eye-glow"></div>
+                        </div>
+
+                        <div class="mask-center">
+                            SPIDER-LINK
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mask-info">
+
+                    <div class="feature-row">
+
+                        <span>01</span>
+
+                        <div>
+                            <h3>PROGRAMMABLE EYES</h3>
+                            <p>
+                                Custom expressions and animated
+                                visual states.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="feature-row">
+
+                        <span>02</span>
+
+                        <div>
+                            <h3>HUD READY</h3>
+                            <p>
+                                Designed around a configurable
+                                wearable interface.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="feature-row">
+
+                        <span>03</span>
+
+                        <div>
+                            <h3>GESTURE CONTROL</h3>
+                            <p>
+                                Conceptual interaction through
+                                supported sensors and controls.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="feature-row">
+
+                        <span>04</span>
+
+                        <div>
+                            <h3>PHONE SYNC</h3>
+                            <p>
+                                Connect the mask to the companion
+                                control interface.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             HUD
+        ================================================== -->
+
+        <section
+            class="section hud-section"
+            id="hud"
+        >
+
+            <div class="section-heading">
+
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    INTERFACE / 04
+                </div>
+
+                <h2>
+                    YOUR
+                    <span>HUD.</span>
+                </h2>
+
+                <p>
+                    Choose how SPIDER-LINK communicates with you.
+                </p>
+
+            </div>
+
+
+            <div class="hud-layout">
+
+                <div class="hud-options">
+
+                    <button
+                        class="hud-option active"
+                        data-hud="minimal"
+                    >
+                        <span>01</span>
+                        <strong>MINIMAL</strong>
+                        <small>Clean information</small>
+                    </button>
+
+                    <button
+                        class="hud-option"
+                        data-hud="tactical"
+                    >
+                        <span>02</span>
+                        <strong>TACTICAL</strong>
+                        <small>High information</small>
+                    </button>
+
+                    <button
+                        class="hud-option"
+                        data-hud="stealth"
+                    >
+                        <span>03</span>
+                        <strong>STEALTH</strong>
+                        <small>Low visibility</small>
+                    </button>
+
+                    <button
+                        class="hud-option"
+                        data-hud="developer"
+                    >
+                        <span>04</span>
+                        <strong>DEVELOPER</strong>
+                        <small>System telemetry</small>
+                    </button>
+
+                </div>
+
+
+                <div class="hud-console">
+
+                    <div class="console-header">
+
+                        <span>
+                            SPIDER-LINK HUD
+                        </span>
+
+                        <span class="console-live">
+                            ● LIVE
+                        </span>
+
+                    </div>
+
+
+                    <div class="console-display">
+
+                        <div class="console-top">
+
+                            <span>SPIDER-LINK</span>
+
+                            <span id="hudMode">
+                                MINIMAL
+                            </span>
+
+                        </div>
+
+
+                        <div class="console-center">
+
+                            <div class="hud-crosshair">
+                                +
+                            </div>
+
+                            <div class="hud-readout">
+
+                                <span>
+                                    SUIT
+                                </span>
+
+                                <strong id="hudSuit">
+                                    CLASSIC
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="console-bottom">
+
+                            <span>
+                                BATTERY
+                                <strong>87%</strong>
+                            </span>
+
+                            <span>
+                                LINK
+                                <strong>ONLINE</strong>
+                            </span>
+
+                            <span>
+                                AI
+                                <strong id="hudAI">
+                                    OFFLINE
+                                </strong>
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SUITS
+        ================================================== -->
+
+        <section
+            class="section suits-section"
+            id="suits"
+        >
+
+            <div class="section-heading">
+
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    SUIT PROFILES / 05
+                </div>
+
+                <h2>
+                    CHOOSE YOUR
+                    <span>SYSTEM.</span>
+                </h2>
+
+                <p>
+                    Each profile changes the visual identity and
+                    interface behavior of SPIDER-LINK.
+                </p>
+
+            </div>
+
+
+            <div class="suit-grid">
+
+                <button
+                    class="suit-card classic active"
+                    data-suit="CLASSIC"
+                >
+
+                    <div class="suit-preview">
+                        <div class="suit-symbol">
+                            ✦
+                        </div>
+                    </div>
+
+                    <div class="suit-content">
+
+                        <span>01</span>
+
+                        <h3>CLASSIC</h3>
+
+                        <p>
+                            Balanced interface profile.
+                        </p>
+
+                        <strong class="suit-status">
+                            SELECTED
+                        </strong>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="suit-card shadow"
+                    data-suit="SHADOW"
+                >
+
+                    <div class="suit-preview">
+                        <div class="suit-symbol">
+                            ◈
+                        </div>
+                    </div>
+
+                    <div class="suit-content">
+
+                        <span>02</span>
+
+                        <h3>SHADOW</h3>
+
+                        <p>
+                            Minimal stealth interface.
+                        </p>
+
+                        <strong class="suit-status">
+                            AVAILABLE
+                        </strong>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="suit-card apex"
+                    data-suit="APEX"
+                >
+
+                    <div class="suit-preview">
+                        <div class="suit-symbol">
+                            ▲
+                        </div>
+                    </div>
+
+                    <div class="suit-content">
+
+                        <span>03</span>
+
+                        <h3>APEX</h3>
+
+                        <p>
+                            Advanced high-performance profile.
+                        </p>
+
+                        <strong class="suit-status">
+                            AVAILABLE
+                        </strong>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    class="suit-card custom"
+                    data-suit="CUSTOM"
+                >
+
+                    <div class="suit-preview">
+                        <div class="suit-symbol">
+                            ⚙
+                        </div>
+                    </div>
+
+                    <div class="suit-content">
+
+                        <span>04</span>
+
+                        <h3>CUSTOM</h3>
+
+                        <p>
+                            Build your own interface profile.
+                        </p>
+
+                        <strong class="suit-status">
+                            AVAILABLE
+                        </strong>
+
+                    </div>
+
+                </button>
+
+            </div>
+
+
+            <div class="selected-suit-panel">
+
+                <span>
+                    CURRENT SUIT
+                </span>
+
+                <strong id="selectedSuitName">
+                    CLASSIC
+                </strong>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             AI
+        ================================================== -->
+
+        <section
+            class="section ai-section"
+            id="ai"
+        >
+
+            <div class="section-heading">
+
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    PERSONAL AI / 06
+                </div>
+
+                <h2>
+                    GIVE YOUR
+                    <span>AI A NAME.</span>
+                </h2>
+
+                <p>
+                    Your personal AI is customizable. Choose the
+                    identity of the assistant connected to your system.
+                </p>
+
+            </div>
+
+
+            <div class="ai-panel">
+
+                <div class="ai-visual">
+
+                    <div class="ai-core">
+                        <span>AI</span>
+                    </div>
+
+                    <div class="ai-status">
+                        SYSTEM READY
+                    </div>
+
+                </div>
+
+
+                <div class="ai-controls">
+
+                    <label for="aiNameInput">
+                        AI DESIGNATION
+                    </label>
+
+                    <div class="ai-input-row">
+
+                        <input
+                            type="text"
+                            id="aiNameInput"
+                            placeholder="Enter AI name"
+                            maxlength="20"
+                            autocomplete="off"
+                        >
+
+                        <button
+                            class="button button-primary"
+                            id="saveAI"
+                            type="button"
+                        >
+                            SAVE
+                        </button>
+
+                    </div>
+
+
+                    <div class="ai-current">
+
+                        <span>CURRENT AI</span>
+
+                        <strong id="aiNameDisplay">
+                            UNCONFIGURED
+                        </strong>
+
+                    </div>
+
+
+                    <button
+                        class="ai-command"
+                        id="commandAI"
+                        type="button"
+                    >
+                        SYSTEM STATUS
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PHONE SYNC
+        ================================================== -->
+
+        <section class="section sync-section">
+
+            <div class="section-heading">
+
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    ECOSYSTEM / 07
+                </div>
+
+                <h2>
+                    ONE SYSTEM.
+                    <span>EVERY DEVICE.</span>
+                </h2>
+
+                <p>
+                    SPIDER-LINK is designed around synchronized
+                    wearable and companion interfaces.
+                </p>
+
+            </div>
+
+
+            <div class="sync-diagram">
+
+                <div class="sync-node">
+
+                    <span class="sync-icon">
+                        ◉
+                    </span>
+
+                    <strong>MASK</strong>
+
+                    <small>
+                        WEARABLE
+                    </small>
+
+                </div>
+
+
+                <div class="sync-line"></div>
+
+
+                <div class="sync-node main">
+
+                    <span class="sync-icon">
+                        ✦
+                    </span>
+
+                    <strong>SPIDER-LINK</strong>
+
+                    <small>
+                        CORE
+                    </small>
+
+                </div>
+
+
+                <div class="sync-line"></div>
+
+
+                <div class="sync-node">
+
+                    <span class="sync-icon">
+                        ▣
+                    </span>
+
+                    <strong>PHONE</strong>
+
+                    <small>
+                        CONTROL
+                    </small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ARCHITECTURE
+        ================================================== -->
+
+        <section class="section architecture-section">
+
+            <div class="section-heading">
+
+                <div class="eyebrow">
+                    <span class="eyebrow-line"></span>
+                    ARCHITECTURE / 08
+                </div>
+
+                <h2>
+                    BUILT TO
+                    <span>EVOLVE.</span>
+                </h2>
+
+                <p>
+                    SPIDER-LINK starts as a web interface and can
+                    eventually expand toward real wearable computing.
+                </p>
+
+            </div>
+
+
+            <div class="architecture-grid">
+
+                <article class="architecture-card">
+                    <span>01</span>
+                    <h3>WEB</h3>
+                    <p>HTML / CSS / JavaScript</p>
+                </article>
+
+                <article class="architecture-card">
+                    <span>02</span>
+                    <h3>APP</h3>
+                    <p>Companion control interface</p>
+                </article>
+
+                <article class="architecture-card">
+                    <span>03</span>
+                    <h3>HARDWARE</h3>
+                    <p>Sensors / LEDs / audio / controls</p>
+                </article>
+
+                <article class="architecture-card">
+                    <span>04</span>
+                    <h3>AI</h3>
+                    <p>Personal assistant and system intelligence</p>
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SAFETY
+        ================================================== -->
+
+        <section class="section safety-section">
+
+            <div class="safety-panel">
+
+                <div class="safety-icon">
+                    !
+                </div>
+
+                <div>
+
+                    <span class="eyebrow">
+                        SAFETY / 09
+                    </span>
+
+                    <h2>
+                        EXPERIMENTAL
+                        <span>WEARABLE TECHNOLOGY.</span>
+                    </h2>
+
+                    <p>
+                        SPIDER-LINK is an original fictional/prototype
+                        wearable technology concept. Any physical
+                        prototype should prioritize visibility,
+                        comfort, electrical safety, reliable controls,
+                        and safe non-projectile effects.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="footer">
+
+        <div class="footer-brand">
+
+            <span class="logo-mark">✦</span>
+
+            <div>
+
+                <strong>
+                    SPIDER-LINK
+                </strong>
+
+                <span>
+                    WEAR THE INTERFACE.
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-meta">
+
+            <span>
+                ORIGINAL CONCEPT
+            </span>
+
+            <span>
+                VERSION 0.1.0
+            </span>
+
+            <span>
+                SYSTEM ONLINE
+            </span>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =====================================================
+         NOTIFICATION
+    ====================================================== -->
+
+    <div
+        class="notification"
+        id="notification"
+        aria-live="polite"
+    >
+        <span class="notification-dot"></span>
+        <span id="notificationText">
+            SYSTEM READY
+        </span>
+    </div>
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script src="script.js"></script>
+
+</body>
+</html>
