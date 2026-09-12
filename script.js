@@ -42,6 +42,10 @@ const SPIDERLINK = {
 
     hud: {
         activePanel: "SYSTEM"
+    },
+
+    boot: {
+        complete: false
     }
 
 };
@@ -61,79 +65,89 @@ const $$ = (selector, parent = document) => {
 
 
 /* =========================================================
-   DOM REFERENCES
-   ========================================================= */
-
-const heroAIName = $("#heroAIName");
-const aiNameDisplay = $("#aiNameDisplay");
-const aiNameInput = $("#aiNameInput");
-const saveAI = $("#saveAI");
-const commandAI = $("#commandAI");
-
-const hudOptions = $$(".hud-option");
-const suitCards = $$(".suit-card");
-
-const systemOnlineElements = $$(".system-online");
-
-const navLinks = $$(".nav-links a");
-
-const buttons = $$("button");
-
-const statValues = $$(".stat-value");
-
-
-/* =========================================================
-   LOCAL STORAGE
+   STORAGE
    ========================================================= */
 
 const STORAGE_KEY = "spiderlink_state";
 
 
+/* =========================================================
+   SAFE HTML ESCAPE
+   ========================================================= */
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+
+/* =========================================================
+   LOAD SAVED STATE
+   ========================================================= */
+
 function loadSavedState() {
 
     try {
 
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved =
+            localStorage.getItem(STORAGE_KEY);
 
         if (!saved) {
             return;
         }
 
-        const parsed = JSON.parse(saved);
-
-        if (parsed.ai) {
-            SPIDERLINK.ai = {
-                ...SPIDERLINK.ai,
-                ...parsed.ai
-            };
-        }
+        const parsed =
+            JSON.parse(saved);
 
         if (parsed.system) {
+
             SPIDERLINK.system = {
                 ...SPIDERLINK.system,
                 ...parsed.system
             };
-        }
 
-        if (parsed.suit) {
-            SPIDERLINK.suit = {
-                ...SPIDERLINK.suit,
-                ...parsed.suit
-            };
         }
 
         if (parsed.mask) {
+
             SPIDERLINK.mask = {
                 ...SPIDERLINK.mask,
                 ...parsed.mask
             };
+
+        }
+
+        if (parsed.suit) {
+
+            SPIDERLINK.suit = {
+                ...SPIDERLINK.suit,
+                ...parsed.suit
+            };
+
+        }
+
+        if (parsed.ai) {
+
+            SPIDERLINK.ai = {
+                ...SPIDERLINK.ai,
+                ...parsed.ai
+            };
+
         }
 
         if (parsed.hud) {
+
             SPIDERLINK.hud = {
                 ...SPIDERLINK.hud,
                 ...parsed.hud
             };
+
         }
 
     } catch (error) {
@@ -147,6 +161,10 @@ function loadSavedState() {
 
 }
 
+
+/* =========================================================
+   SAVE STATE
+   ========================================================= */
 
 function saveState() {
 
@@ -170,23 +188,526 @@ function saveState() {
 
 
 /* =========================================================
+   SPLASH / BOOT SYSTEM
+   ========================================================= */
+
+function createSplashScreen() {
+
+    let splash =
+        $("#spiderlink-splash");
+
+    if (splash) {
+        return splash;
+    }
+
+    splash =
+        document.createElement("div");
+
+    splash.id =
+        "spiderlink-splash";
+
+    splash.innerHTML = `
+        <div class="splash-grid"></div>
+
+        <div class="splash-content">
+
+            <div class="splash-symbol">
+                <div class="splash-ring ring-one"></div>
+                <div class="splash-ring ring-two"></div>
+
+                <div class="splash-spider">
+                    🕷
+                </div>
+            </div>
+
+            <div class="splash-brand">
+                SPIDER-LINK
+            </div>
+
+            <div class="splash-subtitle">
+                WEAR THE INTERFACE
+            </div>
+
+            <div class="splash-status">
+                <span id="splashStatus">
+                    INITIALIZING SYSTEM
+                </span>
+
+                <span id="splashPercent">
+                    0%
+                </span>
+            </div>
+
+            <div class="splash-progress">
+                <div
+                    id="splashProgressBar"
+                    class="splash-progress-bar"
+                ></div>
+            </div>
+
+            <div
+                id="splashLog"
+                class="splash-log"
+            >
+                BOOT SEQUENCE STARTING...
+            </div>
+
+        </div>
+    `;
+
+    document.body.prepend(splash);
+
+    addSplashStyles();
+
+    return splash;
+
+}
+
+
+/* =========================================================
+   SPLASH STYLES
+   ========================================================= */
+
+function addSplashStyles() {
+
+    if ($("#spiderlink-splash-styles")) {
+        return;
+    }
+
+    const style =
+        document.createElement("style");
+
+    style.id =
+        "spiderlink-splash-styles";
+
+    style.textContent = `
+
+        #spiderlink-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(255,38,56,.10),
+                    transparent 32%
+                ),
+                #030405;
+            color: #f5f7fa;
+            overflow: hidden;
+            transition:
+                opacity .7s ease,
+                visibility .7s ease;
+        }
+
+        #spiderlink-splash.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .splash-grid {
+            position: absolute;
+            inset: 0;
+            opacity: .14;
+            background-image:
+                linear-gradient(
+                    rgba(255,255,255,.06) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,.06) 1px,
+                    transparent 1px
+                );
+            background-size: 42px 42px;
+            mask-image:
+                radial-gradient(
+                    circle at center,
+                    black,
+                    transparent 75%
+                );
+        }
+
+        .splash-content {
+            position: relative;
+            z-index: 2;
+            width: min(460px, 88vw);
+            text-align: center;
+        }
+
+        .splash-symbol {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .splash-spider {
+            position: relative;
+            z-index: 3;
+            font-size: 54px;
+            color: #ff2638;
+            filter:
+                drop-shadow(
+                    0 0 12px
+                    rgba(255,38,56,.8)
+                );
+            animation:
+                splashSpiderPulse
+                1.8s ease-in-out infinite;
+        }
+
+        .splash-ring {
+            position: absolute;
+            border: 1px solid
+                rgba(255,38,56,.5);
+            border-radius: 50%;
+            inset: 10px;
+        }
+
+        .ring-one {
+            animation:
+                splashSpin
+                7s linear infinite;
+        }
+
+        .ring-two {
+            inset: 25px;
+            border-style: dashed;
+            opacity: .5;
+            animation:
+                splashSpinReverse
+                5s linear infinite;
+        }
+
+        .splash-brand {
+            font-family:
+                Orbitron,
+                Inter,
+                Arial,
+                sans-serif;
+            font-size: clamp(25px, 6vw, 42px);
+            font-weight: 800;
+            letter-spacing: .18em;
+            color: #f5f7fa;
+        }
+
+        .splash-subtitle {
+            margin-top: 9px;
+            font-family:
+                Orbitron,
+                Inter,
+                Arial,
+                sans-serif;
+            font-size: 9px;
+            letter-spacing: .32em;
+            color: #ff2638;
+        }
+
+        .splash-status {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 42px;
+            margin-bottom: 8px;
+            font-family:
+                Orbitron,
+                Inter,
+                Arial,
+                sans-serif;
+            font-size: 8px;
+            letter-spacing: .13em;
+            color: rgba(245,247,250,.65);
+        }
+
+        #splashPercent {
+            color: #49ff9b;
+        }
+
+        .splash-progress {
+            height: 3px;
+            background:
+                rgba(255,255,255,.08);
+            overflow: hidden;
+        }
+
+        .splash-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #ff2638;
+            box-shadow:
+                0 0 14px
+                rgba(255,38,56,.8);
+            transition: width .18s ease;
+        }
+
+        .splash-log {
+            min-height: 20px;
+            margin-top: 15px;
+            font-family:
+                "Courier New",
+                monospace;
+            font-size: 9px;
+            letter-spacing: .08em;
+            color: rgba(245,247,250,.38);
+        }
+
+        @keyframes splashSpin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes splashSpinReverse {
+            from {
+                transform: rotate(360deg);
+            }
+            to {
+                transform: rotate(0deg);
+            }
+        }
+
+        @keyframes splashSpiderPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: .8;
+            }
+
+            50% {
+                transform: scale(1.08);
+                opacity: 1;
+            }
+        }
+
+        @media (
+            prefers-reduced-motion: reduce
+        ) {
+
+            .splash-spider,
+            .ring-one,
+            .ring-two {
+                animation: none;
+            }
+
+        }
+
+    `;
+
+    document.head.appendChild(style);
+
+}
+
+
+/* =========================================================
+   BOOT LOGIC
+   ========================================================= */
+
+function bootStep(
+    percent,
+    status,
+    log,
+    delay
+) {
+
+    return new Promise((resolve) => {
+
+        setTimeout(() => {
+
+            const progress =
+                $("#splashProgressBar");
+
+            const percentText =
+                $("#splashPercent");
+
+            const statusText =
+                $("#splashStatus");
+
+            const logText =
+                $("#splashLog");
+
+            if (progress) {
+                progress.style.width =
+                    `${percent}%`;
+            }
+
+            if (percentText) {
+                percentText.textContent =
+                    `${percent}%`;
+            }
+
+            if (statusText) {
+                statusText.textContent =
+                    status;
+            }
+
+            if (logText) {
+                logText.textContent =
+                    log;
+            }
+
+            resolve();
+
+        }, delay);
+
+    });
+
+}
+
+
+async function runBootSequence() {
+
+    const splash =
+        createSplashScreen();
+
+    document.body.style.overflow =
+        "hidden";
+
+    await bootStep(
+        12,
+        "POWER CORE",
+        "POWER CORE INITIALIZED...",
+        120
+    );
+
+    await bootStep(
+        28,
+        "SYSTEM CHECK",
+        "SYSTEM TELEMETRY ONLINE...",
+        180
+    );
+
+    await bootStep(
+        43,
+        "MASK LINK",
+        "MASK INTERFACE CONNECTED...",
+        180
+    );
+
+    await bootStep(
+        57,
+        "SUIT LINK",
+        "SUIT PROFILE DATABASE READY...",
+        180
+    );
+
+    await bootStep(
+        71,
+        "HUD CORE",
+        "HUD RENDERING ENGINE ONLINE...",
+        180
+    );
+
+    await bootStep(
+        84,
+        "AI CORE",
+        `${SPIDERLINK.ai.name} AI CORE INITIALIZING...`,
+        180
+    );
+
+    await bootStep(
+        94,
+        "SYNC",
+        "PHONE // MASK // SUIT SYNCHRONIZED...",
+        180
+    );
+
+    await bootStep(
+        100,
+        "SYSTEM ONLINE",
+        "SPIDER-LINK READY.",
+        240
+    );
+
+    SPIDERLINK.boot.complete =
+        true;
+
+    saveState();
+
+    await new Promise((resolve) => {
+
+        setTimeout(resolve, 500);
+
+    });
+
+    splash.classList.add("hidden");
+
+    document.body.style.overflow = "";
+
+    setTimeout(() => {
+
+        splash.remove();
+
+    }, 800);
+
+}
+
+
+/* =========================================================
+   DOM REFERENCES
+   ========================================================= */
+
+const heroAIName =
+    $("#heroAIName");
+
+const aiNameDisplay =
+    $("#aiNameDisplay");
+
+const aiNameInput =
+    $("#aiNameInput");
+
+const saveAI =
+    $("#saveAI");
+
+const commandAI =
+    $("#commandAI");
+
+const hudOptions =
+    $$(".hud-option");
+
+const suitCards =
+    $$(".suit-card");
+
+const systemOnlineElements =
+    $$(".system-online");
+
+const navLinks =
+    $$(".nav-links a");
+
+const buttons =
+    $$("button");
+
+
+/* =========================================================
    AI NAME SYSTEM
    ========================================================= */
 
 function updateAINameUI() {
 
-    const name = SPIDERLINK.ai.name || "LARA";
+    const name =
+        SPIDERLINK.ai.name || "LARA";
 
     if (heroAIName) {
-        heroAIName.textContent = name;
+        heroAIName.textContent =
+            name;
     }
 
     if (aiNameDisplay) {
-        aiNameDisplay.textContent = name;
+        aiNameDisplay.textContent =
+            name;
     }
 
     if (aiNameInput) {
-        aiNameInput.value = name;
+        aiNameInput.value =
+            name;
     }
 
     if (commandAI) {
@@ -205,25 +726,23 @@ function saveAIName() {
         return;
     }
 
-    let newName = aiNameInput.value.trim();
+    let newName =
+        aiNameInput.value.trim();
 
     if (!newName) {
         newName = "LARA";
     }
 
-    /*
-     * Keep the AI name readable.
-     * This is only a UI simulator, so we limit
-     * extremely long names.
-     */
+    newName =
+        newName
+            .replace(/\s+/g, " ")
+            .slice(0, 20);
 
-    newName = newName
-        .replace(/\s+/g, " ")
-        .slice(0, 20);
-
-    SPIDERLINK.ai.name = newName;
+    SPIDERLINK.ai.name =
+        newName;
 
     updateAINameUI();
+
     saveState();
 
     showNotification(
@@ -260,22 +779,6 @@ if (aiNameInput) {
 
 
 /* =========================================================
-   SAFE HTML ESCAPE
-   ========================================================= */
-
-function escapeHTML(value) {
-
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-
-}
-
-
-/* =========================================================
    HUD CONSOLE
    ========================================================= */
 
@@ -283,31 +786,36 @@ const HUD_DATA = {
 
     SYSTEM: {
         title: "SYSTEM OVERVIEW",
-        description: "Core SPIDER-LINK system telemetry.",
+        description:
+            "Core SPIDER-LINK system telemetry.",
         mode: "NORMAL"
     },
 
     SUIT: {
         title: "SUIT CONTROL",
-        description: "Current wearable suit configuration.",
+        description:
+            "Current wearable suit configuration.",
         mode: "SUIT"
     },
 
     AI: {
         title: "AI CORE",
-        description: "Personal intelligence and command interface.",
+        description:
+            "Personal intelligence and command interface.",
         mode: "AI"
     },
 
     CAMERA: {
         title: "CAMERA SYSTEM",
-        description: "Mask camera and visual subsystem.",
+        description:
+            "Mask camera and visual subsystem.",
         mode: "CAMERA"
     },
 
     SENSORS: {
         title: "SENSOR ARRAY",
-        description: "Wearable sensor monitoring interface.",
+        description:
+            "Wearable sensor monitoring interface.",
         mode: "SENSORS"
     }
 
@@ -321,18 +829,66 @@ function getHUDMainHeader() {
 }
 
 
+function showHUDPanelMessage(panel) {
+
+    const screen =
+        $(".hud-screen");
+
+    if (!screen) {
+        return;
+    }
+
+    const existing =
+        $(".hud-screen-label", screen);
+
+    if (existing) {
+        existing.remove();
+    }
+
+    const label =
+        document.createElement("div");
+
+    label.className =
+        "hud-screen-label";
+
+    label.textContent =
+        `${panel} // ${HUD_DATA[panel].mode}`;
+
+    Object.assign(
+        label.style,
+        {
+            position: "absolute",
+            bottom: "18px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            color: "rgba(255,255,255,.5)",
+            fontFamily:
+                "Orbitron, sans-serif",
+            fontSize: "8px",
+            letterSpacing: ".14em"
+        }
+    );
+
+    screen.appendChild(label);
+
+}
+
+
 function setHUDPanel(panel) {
 
     if (!HUD_DATA[panel]) {
         panel = "SYSTEM";
     }
 
-    SPIDERLINK.hud.activePanel = panel;
+    SPIDERLINK.hud.activePanel =
+        panel;
 
     hudOptions.forEach((button) => {
 
         const buttonText =
-            button.textContent.trim().toUpperCase();
+            button.textContent
+                .trim()
+                .toUpperCase();
 
         button.classList.toggle(
             "active",
@@ -341,15 +897,20 @@ function setHUDPanel(panel) {
 
     });
 
-    const header = getHUDMainHeader();
+    const header =
+        getHUDMainHeader();
 
     if (header) {
 
-        const title = $("h3", header);
-        const description = $("p", header);
+        const title =
+            $("h3", header);
+
+        const description =
+            $("p", header);
 
         if (title) {
-            title.textContent = HUD_DATA[panel].title;
+            title.textContent =
+                HUD_DATA[panel].title;
         }
 
         if (description) {
@@ -366,41 +927,6 @@ function setHUDPanel(panel) {
 }
 
 
-function showHUDPanelMessage(panel) {
-
-    const screen = $(".hud-screen");
-
-    if (!screen) {
-        return;
-    }
-
-    const existing = $(".hud-screen-label", screen);
-
-    if (existing) {
-        existing.remove();
-    }
-
-    const label = document.createElement("div");
-
-    label.className = "hud-screen-label";
-
-    label.textContent =
-        `${panel} // ${HUD_DATA[panel].mode}`;
-
-    label.style.position = "absolute";
-    label.style.bottom = "18px";
-    label.style.left = "50%";
-    label.style.transform = "translateX(-50%)";
-    label.style.color = "rgba(255,255,255,.5)";
-    label.style.fontFamily = "Orbitron, sans-serif";
-    label.style.fontSize = "8px";
-    label.style.letterSpacing = ".14em";
-
-    screen.appendChild(label);
-
-}
-
-
 hudOptions.forEach((button) => {
 
     button.addEventListener(
@@ -408,7 +934,9 @@ hudOptions.forEach((button) => {
         () => {
 
             const panel =
-                button.textContent.trim().toUpperCase();
+                button.textContent
+                    .trim()
+                    .toUpperCase();
 
             setHUDPanel(panel);
 
@@ -434,7 +962,8 @@ function normalizeSuitName(name) {
 
 function getSuitNameFromCard(card) {
 
-    const title = $("h3", card);
+    const title =
+        $("h3", card);
 
     if (!title) {
         return "CUSTOM";
@@ -447,9 +976,34 @@ function getSuitNameFromCard(card) {
 }
 
 
-function setSuit(suit) {
+function formatSuitName(suit) {
 
-    SPIDERLINK.suit.current = suit;
+    return String(suit)
+        .replaceAll("_", " ")
+        .toLowerCase()
+        .replace(
+            /\b\w/g,
+            char => char.toUpperCase()
+        );
+
+}
+
+
+/*
+ * IMPORTANT:
+ * notify = true when the user manually
+ * changes suit.
+ *
+ * notify = false during startup.
+ */
+
+function setSuit(
+    suit,
+    notify = true
+) {
+
+    SPIDERLINK.suit.current =
+        normalizeSuitName(suit);
 
     suitCards.forEach((card) => {
 
@@ -457,7 +1011,8 @@ function setSuit(suit) {
             getSuitNameFromCard(card);
 
         const active =
-            cardSuit === suit;
+            cardSuit ===
+            SPIDERLINK.suit.current;
 
         card.classList.toggle(
             "active",
@@ -478,24 +1033,37 @@ function setSuit(suit) {
 
     });
 
-    document.body.dataset.suit = suit;
+    document.body.dataset.suit =
+        SPIDERLINK.suit.current;
 
-    updateSuitUI(suit);
+    updateSuitUI(
+        SPIDERLINK.suit.current
+    );
 
     saveState();
 
-    showNotification(
-        `Suit profile loaded → ${formatSuitName(suit)}`
-    );
+    /*
+     * ONLY notify when a real
+     * user action happens.
+     */
+
+    if (notify) {
+
+        showNotification(
+            `Suit profile loaded → ${formatSuitName(
+                SPIDERLINK.suit.current
+            )}`
+        );
+
+    }
 
 }
 
 
 function updateSuitUI(suit) {
 
-    const suitLabels = $$(
-        "[data-suit]"
-    );
+    const suitLabels =
+        $$("[data-suit]");
 
     suitLabels.forEach((element) => {
 
@@ -503,18 +1071,6 @@ function updateSuitUI(suit) {
             formatSuitName(suit);
 
     });
-
-}
-
-
-function formatSuitName(suit) {
-
-    return String(suit)
-        .replaceAll("_", " ")
-        .toLowerCase()
-        .replace(/\b\w/g, char =>
-            char.toUpperCase()
-        );
 
 }
 
@@ -528,7 +1084,10 @@ suitCards.forEach((card) => {
             const suit =
                 getSuitNameFromCard(card);
 
-            setSuit(suit);
+            setSuit(
+                suit,
+                true
+            );
 
         }
     );
@@ -537,16 +1096,23 @@ suitCards.forEach((card) => {
 
 
 /* =========================================================
-   SYSTEM STATUS
+   SYSTEM TELEMETRY
    ========================================================= */
 
 function updateSystemStatus() {
 
     SPIDERLINK.system.battery -=
-        Math.random() < 0.15 ? 1 : 0;
+        Math.random() < 0.15
+            ? 1
+            : 0;
 
-    if (SPIDERLINK.system.battery < 20) {
-        SPIDERLINK.system.battery = 87;
+    if (
+        SPIDERLINK.system.battery < 20
+    ) {
+
+        SPIDERLINK.system.battery =
+            87;
+
     }
 
     SPIDERLINK.system.connection =
@@ -571,25 +1137,31 @@ function updateSystemStatus() {
 
 function updateTelemetryUI() {
 
-    const labels = $$(
-        ".stat-label"
-    );
+    const labels =
+        $$(".stat-label");
 
     labels.forEach((label) => {
 
         const text =
-            label.textContent.trim().toUpperCase();
+            label.textContent
+                .trim()
+                .toUpperCase();
+
+        const parent =
+            label.parentElement;
 
         const value =
-            label.parentElement
-                ? $(".stat-value", label.parentElement)
+            parent
+                ? $(".stat-value", parent)
                 : null;
 
         if (!value) {
             return;
         }
 
-        if (text.includes("BATTERY")) {
+        if (
+            text.includes("BATTERY")
+        ) {
 
             value.textContent =
                 `${SPIDERLINK.system.battery}%`;
@@ -648,38 +1220,45 @@ setInterval(
 
 
 /* =========================================================
-   SYSTEM ONLINE INDICATORS
+   ONLINE INDICATORS
    ========================================================= */
 
 function updateOnlineIndicators() {
 
-    systemOnlineElements.forEach((element) => {
-
-        if (SPIDERLINK.system.online) {
-
-            element.classList.add("online");
+    systemOnlineElements.forEach(
+        (element) => {
 
             const text =
                 element.querySelector("span");
 
-            if (text) {
-                text.textContent = "SYSTEM ONLINE";
-            }
+            if (
+                SPIDERLINK.system.online
+            ) {
 
-        } else {
+                element.classList.add(
+                    "online"
+                );
 
-            element.classList.remove("online");
+                if (text) {
+                    text.textContent =
+                        "SYSTEM ONLINE";
+                }
 
-            const text =
-                element.querySelector("span");
+            } else {
 
-            if (text) {
-                text.textContent = "SYSTEM OFFLINE";
+                element.classList.remove(
+                    "online"
+                );
+
+                if (text) {
+                    text.textContent =
+                        "SYSTEM OFFLINE";
+                }
+
             }
 
         }
-
-    });
+    );
 
 }
 
@@ -688,7 +1267,8 @@ function updateOnlineIndicators() {
    NOTIFICATION SYSTEM
    ========================================================= */
 
-let notificationTimer = null;
+let notificationTimer =
+    null;
 
 
 function createNotificationElement() {
@@ -706,52 +1286,39 @@ function createNotificationElement() {
     notification.id =
         "spiderlink-notification";
 
-    notification.style.position = "fixed";
-    notification.style.right = "22px";
-    notification.style.bottom = "22px";
-    notification.style.zIndex = "99999";
+    Object.assign(
+        notification.style,
+        {
+            position: "fixed",
+            right: "22px",
+            bottom: "22px",
+            zIndex: "99999",
+            maxWidth: "320px",
+            padding: "14px 18px",
+            border:
+                "1px solid rgba(255,38,56,.4)",
+            borderRadius: "10px",
+            background:
+                "rgba(5,7,9,.92)",
+            backdropFilter: "blur(15px)",
+            color: "#f5f7fa",
+            fontFamily:
+                "Orbitron, sans-serif",
+            fontSize: "9px",
+            letterSpacing: ".08em",
+            boxShadow:
+                "0 15px 50px rgba(0,0,0,.45)",
+            opacity: "0",
+            transform:
+                "translateY(10px)",
+            transition:
+                "opacity .2s ease, transform .2s ease"
+        }
+    );
 
-    notification.style.maxWidth = "320px";
-
-    notification.style.padding =
-        "14px 18px";
-
-    notification.style.border =
-        "1px solid rgba(255,38,56,.4)";
-
-    notification.style.borderRadius =
-        "10px";
-
-    notification.style.background =
-        "rgba(5,7,9,.92)";
-
-    notification.style.backdropFilter =
-        "blur(15px)";
-
-    notification.style.color =
-        "#f5f7fa";
-
-    notification.style.fontFamily =
-        "Orbitron, sans-serif";
-
-    notification.style.fontSize =
-        "9px";
-
-    notification.style.letterSpacing =
-        ".08em";
-
-    notification.style.boxShadow =
-        "0 15px 50px rgba(0,0,0,.45)";
-
-    notification.style.opacity = "0";
-
-    notification.style.transform =
-        "translateY(10px)";
-
-    notification.style.transition =
-        "opacity .2s ease, transform .2s ease";
-
-    document.body.appendChild(notification);
+    document.body.appendChild(
+        notification
+    );
 
     return notification;
 
@@ -766,12 +1333,15 @@ function showNotification(message) {
     notification.textContent =
         message;
 
-    notification.style.opacity = "1";
+    notification.style.opacity =
+        "1";
 
     notification.style.transform =
         "translateY(0)";
 
-    clearTimeout(notificationTimer);
+    clearTimeout(
+        notificationTimer
+    );
 
     notificationTimer =
         setTimeout(() => {
@@ -788,118 +1358,128 @@ function showNotification(message) {
 
 
 /* =========================================================
-   BUTTON RIPPLE EFFECT
+   BUTTON RIPPLE
    ========================================================= */
 
-buttons.forEach((button) => {
+function initializeButtonRipples() {
 
-    button.addEventListener(
-        "click",
-        function (event) {
+    $$("button").forEach((button) => {
 
-            const rect =
-                button.getBoundingClientRect();
+        button.addEventListener(
+            "click",
+            function(event) {
 
-            const ripple =
-                document.createElement("span");
+                const rect =
+                    button.getBoundingClientRect();
 
-            ripple.style.position =
-                "absolute";
+                const ripple =
+                    document.createElement("span");
 
-            ripple.style.left =
-                `${event.clientX - rect.left}px`;
+                Object.assign(
+                    ripple.style,
+                    {
+                        position: "absolute",
+                        left:
+                            `${event.clientX - rect.left}px`,
+                        top:
+                            `${event.clientY - rect.top}px`,
+                        width: "5px",
+                        height: "5px",
+                        borderRadius: "50%",
+                        background:
+                            "rgba(255,255,255,.35)",
+                        transform:
+                            "translate(-50%, -50%) scale(0)",
+                        pointerEvents: "none",
+                        transition:
+                            "transform .4s ease, opacity .4s ease"
+                    }
+                );
 
-            ripple.style.top =
-                `${event.clientY - rect.top}px`;
+                button.style.position =
+                    button.style.position ||
+                    "relative";
 
-            ripple.style.width = "5px";
-            ripple.style.height = "5px";
+                button.style.overflow =
+                    "hidden";
 
-            ripple.style.borderRadius = "50%";
+                button.appendChild(
+                    ripple
+                );
 
-            ripple.style.background =
-                "rgba(255,255,255,.35)";
+                requestAnimationFrame(
+                    () => {
 
-            ripple.style.transform =
-                "translate(-50%, -50%) scale(0)";
+                        ripple.style.transform =
+                            "translate(-50%, -50%) scale(35)";
 
-            ripple.style.pointerEvents =
-                "none";
+                        ripple.style.opacity =
+                            "0";
 
-            ripple.style.transition =
-                "transform .4s ease, opacity .4s ease";
+                    }
+                );
 
-            button.style.position =
-                button.style.position || "relative";
+                setTimeout(
+                    () => ripple.remove(),
+                    450
+                );
 
-            button.style.overflow =
-                "hidden";
+            }
+        );
 
-            button.appendChild(ripple);
+    });
 
-            requestAnimationFrame(() => {
-
-                ripple.style.transform =
-                    "translate(-50%, -50%) scale(35)";
-
-                ripple.style.opacity = "0";
-
-            });
-
-            setTimeout(() => {
-
-                ripple.remove();
-
-            }, 450);
-
-        }
-    );
-
-});
+}
 
 
 /* =========================================================
    SMOOTH NAVIGATION
    ========================================================= */
 
-navLinks.forEach((link) => {
+function initializeNavigation() {
 
-    link.addEventListener(
-        "click",
-        (event) => {
+    navLinks.forEach((link) => {
 
-            const href =
-                link.getAttribute("href");
+        link.addEventListener(
+            "click",
+            (event) => {
 
-            if (
-                !href ||
-                !href.startsWith("#")
-            ) {
-                return;
+                const href =
+                    link.getAttribute("href");
+
+                if (
+                    !href ||
+                    !href.startsWith("#")
+                ) {
+                    return;
+                }
+
+                const target =
+                    document.querySelector(
+                        href
+                    );
+
+                if (!target) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                target.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
             }
+        );
 
-            const target =
-                document.querySelector(href);
+    });
 
-            if (!target) {
-                return;
-            }
-
-            event.preventDefault();
-
-            target.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-
-        }
-    );
-
-});
+}
 
 
 /* =========================================================
-   ACTIVE NAVIGATION ON SCROLL
+   ACTIVE NAVIGATION
    ========================================================= */
 
 const sections =
@@ -914,31 +1494,35 @@ function updateActiveNavigation() {
     const scrollPosition =
         window.scrollY + 160;
 
-    sections.forEach((section) => {
+    sections.forEach(
+        (section) => {
 
-        if (
-            scrollPosition >=
-            section.offsetTop
-        ) {
+            if (
+                scrollPosition >=
+                section.offsetTop
+            ) {
 
-            current =
-                section.id;
+                current =
+                    section.id;
+
+            }
 
         }
+    );
 
-    });
+    navLinks.forEach(
+        (link) => {
 
-    navLinks.forEach((link) => {
+            const href =
+                link.getAttribute("href");
 
-        const href =
-            link.getAttribute("href");
+            link.classList.toggle(
+                "active",
+                href === `#${current}`
+            );
 
-        link.classList.toggle(
-            "active",
-            href === `#${current}`
-        );
-
-    });
+        }
+    );
 
 }
 
@@ -953,26 +1537,33 @@ window.addEventListener(
 
 
 /* =========================================================
-   MASK EXPRESSION SYSTEM
+   MASK EXPRESSIONS
    ========================================================= */
 
 const MASK_EXPRESSIONS = [
+
     "NORMAL",
     "ALERT",
     "FOCUS",
     "STEALTH",
     "WARNING"
+
 ];
 
 
-function setMaskExpression(expression) {
+function setMaskExpression(
+    expression
+) {
 
     if (
         !MASK_EXPRESSIONS.includes(
             expression
         )
     ) {
-        expression = "NORMAL";
+
+        expression =
+            "NORMAL";
+
     }
 
     SPIDERLINK.mask.expression =
@@ -1011,7 +1602,9 @@ function cycleMaskExpression() {
         );
 
     const nextIndex =
-        (currentIndex + 1) %
+        (
+            currentIndex + 1
+        ) %
         MASK_EXPRESSIONS.length;
 
     setMaskExpression(
@@ -1022,78 +1615,12 @@ function cycleMaskExpression() {
 
 
 /* =========================================================
-   KEYBOARD SHORTCUTS
+   AI COMMAND SYSTEM
    ========================================================= */
 
-document.addEventListener(
-    "keydown",
-    (event) => {
-
-        /*
-         * Ignore shortcuts while typing.
-         */
-
-        const active =
-            document.activeElement;
-
-        const typing =
-            active &&
-            (
-                active.tagName === "INPUT" ||
-                active.tagName === "TEXTAREA"
-            );
-
-        if (typing) {
-            return;
-        }
-
-
-        /*
-         * M = cycle mask expression
-         */
-
-        if (
-            event.key.toLowerCase() === "m"
-        ) {
-
-            cycleMaskExpression();
-
-            showNotification(
-                `Mask expression → ${SPIDERLINK.mask.expression}`
-            );
-
-        }
-
-
-        /*
-         * 1–5 = HUD panels
-         */
-
-        const panelKeys = {
-            "1": "SYSTEM",
-            "2": "SUIT",
-            "3": "AI",
-            "4": "CAMERA",
-            "5": "SENSORS"
-        };
-
-        if (panelKeys[event.key]) {
-
-            setHUDPanel(
-                panelKeys[event.key]
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   AI COMMAND SIMULATOR
-   ========================================================= */
-
-function processAICommand(command) {
+function processAICommand(
+    command
+) {
 
     const cleanCommand =
         command
@@ -1105,35 +1632,54 @@ function processAICommand(command) {
     }
 
     const aiName =
-        SPIDERLINK.ai.name.toLowerCase();
+        SPIDERLINK.ai.name
+            .toLowerCase();
 
     let response =
-        "Command recognized.";
+        "COMMAND RECOGNIZED.";
 
     if (
-        cleanCommand.includes("system status") ||
-        cleanCommand.includes("status")
+        cleanCommand.includes(
+            "system status"
+        ) ||
+        cleanCommand.includes(
+            "status"
+        )
     ) {
 
         response =
             `SYSTEM ONLINE • BATTERY ${SPIDERLINK.system.battery}% • STABILITY ${SPIDERLINK.system.stability}%`;
 
-    } else if (
-        cleanCommand.includes("battery")
+    }
+
+    else if (
+        cleanCommand.includes(
+            "battery"
+        )
     ) {
 
         response =
             `BATTERY LEVEL ${SPIDERLINK.system.battery}%`;
 
-    } else if (
-        cleanCommand.includes("suit")
+    }
+
+    else if (
+        cleanCommand.includes(
+            "suit"
+        )
     ) {
 
         response =
-            `CURRENT SUIT → ${formatSuitName(SPIDERLINK.suit.current)}`;
+            `CURRENT SUIT → ${formatSuitName(
+                SPIDERLINK.suit.current
+            )}`;
 
-    } else if (
-        cleanCommand.includes("camera")
+    }
+
+    else if (
+        cleanCommand.includes(
+            "camera"
+        )
     ) {
 
         response =
@@ -1141,40 +1687,62 @@ function processAICommand(command) {
                 ? "CAMERA SYSTEM READY."
                 : "CAMERA SYSTEM OFFLINE.";
 
-    } else if (
-        cleanCommand.includes("hello") ||
-        cleanCommand.includes("hi")
+    }
+
+    else if (
+        cleanCommand.includes(
+            "hello"
+        ) ||
+        cleanCommand.includes(
+            "hi"
+        )
     ) {
 
         response =
             `HELLO. ${SPIDERLINK.ai.name} AI CORE IS ONLINE.`;
 
-    } else if (
-        cleanCommand.includes("stealth")
+    }
+
+    else if (
+        cleanCommand.includes(
+            "stealth"
+        )
     ) {
 
         SPIDERLINK.system.mode =
             "STEALTH";
 
-        setMaskExpression("STEALTH");
+        setMaskExpression(
+            "STEALTH"
+        );
 
         response =
             "STEALTH MODE SIMULATED.";
 
-    } else if (
-        cleanCommand.includes("normal")
+    }
+
+    else if (
+        cleanCommand.includes(
+            "normal"
+        )
     ) {
 
         SPIDERLINK.system.mode =
             "NORMAL";
 
-        setMaskExpression("NORMAL");
+        setMaskExpression(
+            "NORMAL"
+        );
 
         response =
             "NORMAL MODE RESTORED.";
 
-    } else if (
-        cleanCommand.includes(aiName)
+    }
+
+    else if (
+        cleanCommand.includes(
+            aiName
+        )
     ) {
 
         response =
@@ -1182,52 +1750,59 @@ function processAICommand(command) {
 
     }
 
-    showNotification(response);
+    showNotification(
+        response
+    );
 
     saveState();
 
 }
 
 
-/*
- * If an element with id="aiCommandInput"
- * exists in the HTML, enable command simulation.
- */
+function initializeAICommands() {
 
-const aiCommandInput =
-    $("#aiCommandInput");
+    const input =
+        $("#aiCommandInput");
 
-const aiCommandButton =
-    $("#aiCommandButton");
+    const button =
+        $("#aiCommandButton");
 
+    if (
+        !input ||
+        !button
+    ) {
+        return;
+    }
 
-if (aiCommandButton && aiCommandInput) {
-
-    aiCommandButton.addEventListener(
+    button.addEventListener(
         "click",
         () => {
 
             processAICommand(
-                aiCommandInput.value
+                input.value
             );
 
-            aiCommandInput.value = "";
+            input.value =
+                "";
 
         }
     );
 
-
-    aiCommandInput.addEventListener(
+    input.addEventListener(
         "keydown",
         (event) => {
 
-            if (event.key === "Enter") {
+            if (
+                event.key ===
+                "Enter"
+            ) {
 
                 processAICommand(
-                    aiCommandInput.value
+                    input.value
                 );
 
-                aiCommandInput.value = "";
+                input.value =
+                    "";
 
             }
 
@@ -1238,14 +1813,17 @@ if (aiCommandButton && aiCommandInput) {
 
 
 /* =========================================================
-   HOVER PARALLAX FOR HUD
+   HUD PARALLAX
    ========================================================= */
 
-const hudFrame =
-    $(".hud-frame");
+function initializeHUDParallax() {
 
+    const hudFrame =
+        $(".hud-frame");
 
-if (hudFrame) {
+    if (!hudFrame) {
+        return;
+    }
 
     hudFrame.addEventListener(
         "mousemove",
@@ -1255,18 +1833,24 @@ if (hudFrame) {
                 hudFrame.getBoundingClientRect();
 
             const x =
-                (event.clientX - rect.left) /
+                (
+                    event.clientX -
+                    rect.left
+                ) /
                 rect.width;
 
             const y =
-                (event.clientY - rect.top) /
+                (
+                    event.clientY -
+                    rect.top
+                ) /
                 rect.height;
 
             const rotateX =
-                (y - 0.5) * -5;
+                (y - .5) * -5;
 
             const rotateY =
-                (x - 0.5) * 5;
+                (x - .5) * 5;
 
             hudFrame.style.transform =
                 `perspective(900px)
@@ -1275,7 +1859,6 @@ if (hudFrame) {
 
         }
     );
-
 
     hudFrame.addEventListener(
         "mouseleave",
@@ -1294,15 +1877,18 @@ if (hudFrame) {
    INTERSECTION OBSERVER
    ========================================================= */
 
-const animatedElements =
-    $$(
-        ".system-card, .suit-card, .feature-row, .arch-node, .ai-panel"
-    );
+function initializeAnimations() {
 
+    const animatedElements =
+        $$(
+            ".system-card, .suit-card, .feature-row, .arch-node, .ai-panel"
+        );
 
-if (
-    "IntersectionObserver" in window
-) {
+    if (
+        !("IntersectionObserver" in window)
+    ) {
+        return;
+    }
 
     const observer =
         new IntersectionObserver(
@@ -1330,15 +1916,15 @@ if (
 
             },
             {
-                threshold: 0.12
+                threshold: .12
             }
         );
-
 
     animatedElements.forEach(
         (element) => {
 
-            element.style.opacity = "0";
+            element.style.opacity =
+                "0";
 
             element.style.transform =
                 "translateY(18px)";
@@ -1357,43 +1943,138 @@ if (
 
 
 /* =========================================================
-   VISIBILITY CLASS
+   VISIBILITY STYLES
    ========================================================= */
 
-const visibilityStyle =
-    document.createElement("style");
+function addVisibilityStyles() {
 
-visibilityStyle.textContent = `
-    .system-card.visible,
-    .suit-card.visible,
-    .feature-row.visible,
-    .arch-node.visible,
-    .ai-panel.visible {
-        opacity: 1 !important;
-        transform: translateY(0) !important;
-    }
+    const style =
+        document.createElement("style");
 
-    .nav-links a.active {
-        color: #f5f7fa;
-    }
+    style.textContent = `
 
-    .nav-links a.active::after {
-        width: 100%;
-    }
-`;
+        .system-card.visible,
+        .suit-card.visible,
+        .feature-row.visible,
+        .arch-node.visible,
+        .ai-panel.visible {
 
-document.head.appendChild(
-    visibilityStyle
-);
+            opacity:
+                1 !important;
+
+            transform:
+                translateY(0) !important;
+
+        }
+
+        .nav-links a.active {
+            color: #f5f7fa;
+        }
+
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+    `;
+
+    document.head.appendChild(
+        style
+    );
+
+}
 
 
 /* =========================================================
-   INITIALIZE
+   KEYBOARD SHORTCUTS
    ========================================================= */
 
-function initializeSPIDERLINK() {
+function initializeKeyboardShortcuts() {
+
+    document.addEventListener(
+        "keydown",
+        (event) => {
+
+            const active =
+                document.activeElement;
+
+            const typing =
+                active &&
+                (
+                    active.tagName ===
+                    "INPUT" ||
+                    active.tagName ===
+                    "TEXTAREA"
+                );
+
+            if (typing) {
+                return;
+            }
+
+            /*
+             * M
+             * Cycle mask expression
+             */
+
+            if (
+                event.key.toLowerCase() ===
+                "m"
+            ) {
+
+                cycleMaskExpression();
+
+                showNotification(
+                    `Mask expression → ${SPIDERLINK.mask.expression}`
+                );
+
+            }
+
+            /*
+             * 1–5
+             * HUD panels
+             */
+
+            const panelKeys = {
+
+                "1": "SYSTEM",
+                "2": "SUIT",
+                "3": "AI",
+                "4": "CAMERA",
+                "5": "SENSORS"
+
+            };
+
+            if (
+                panelKeys[event.key]
+            ) {
+
+                setHUDPanel(
+                    panelKeys[event.key]
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MAIN INITIALIZATION
+   ========================================================= */
+
+async function initializeSPIDERLINK() {
+
+    /*
+     * Load saved user state first.
+     */
 
     loadSavedState();
+
+
+    /*
+     * Prepare visual systems.
+     */
 
     updateAINameUI();
 
@@ -1405,15 +2086,52 @@ function initializeSPIDERLINK() {
         SPIDERLINK.hud.activePanel
     );
 
+
+    /*
+     * IMPORTANT:
+     *
+     * false prevents:
+     *
+     * "Suit profile loaded → Classic"
+     *
+     * from appearing on every page load.
+     */
+
     setSuit(
-        SPIDERLINK.suit.current
+        SPIDERLINK.suit.current,
+        false
     );
+
 
     setMaskExpression(
         SPIDERLINK.mask.expression
     );
 
+
+    /*
+     * Initialize interactive systems.
+     */
+
+    initializeButtonRipples();
+
+    initializeNavigation();
+
+    initializeAICommands();
+
+    initializeHUDParallax();
+
+    initializeAnimations();
+
+    initializeKeyboardShortcuts();
+
+    addVisibilityStyles();
+
     updateActiveNavigation();
+
+
+    /*
+     * Console diagnostics.
+     */
 
     console.log(
         "%cSPIDER-LINK",
@@ -1429,8 +2147,19 @@ function initializeSPIDERLINK() {
         "Prototype interface initialized."
     );
 
+
+    /*
+     * Start splash sequence.
+     */
+
+    await runBootSequence();
+
 }
 
+
+/* =========================================================
+   START
+   ========================================================= */
 
 initializeSPIDERLINK();
 
@@ -1442,25 +2171,17 @@ initializeSPIDERLINK();
 window.SPIDERLINK =
     SPIDERLINK;
 
+window.setSuit =
+    setSuit;
 
-/*
- * Example console commands:
- *
- * SPIDERLINK.ai.name
- *
- * SPIDERLINK.suit.current
- *
- * SPIDERLINK.system.battery
- *
- * setSuit("SHADOW")
- *
- * setMaskExpression("FOCUS")
- *
- * setHUDPanel("AI")
- *
- * processAICommand("system status")
- *
- */
+window.setMaskExpression =
+    setMaskExpression;
+
+window.setHUDPanel =
+    setHUDPanel;
+
+window.processAICommand =
+    processAICommand;
 
 
 /* =========================================================
