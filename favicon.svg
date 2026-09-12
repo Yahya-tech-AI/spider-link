@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#030405"/>
+
+  <!-- Glow -->
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g fill="#ff2638" filter="url(#glow)">
+    <!-- Body -->
+    <ellipse cx="32" cy="34" rx="7" ry="13"/>
+
+    <!-- Head -->
+    <circle cx="32" cy="20" r="5"/>
+
+    <!-- Upper legs -->
+    <path d="M28 24 L18 14 L20 11 L30 21 Z"/>
+    <path d="M36 24 L46 14 L44 11 L34 21 Z"/>
+
+    <!-- Middle-upper legs -->
+    <path d="M27 28 L13 22 L11 25 L25 32 Z"/>
+    <path d="M37 28 L51 22 L53 25 L39 32 Z"/>
+
+    <!-- Middle-lower legs -->
+    <path d="M26 34 L11 34 L9 38 L25 39 Z"/>
+    <path d="M38 34 L53 34 L55 38 L39 39 Z"/>
+
+    <!-- Lower legs -->
+    <path d="M27 40 L15 49 L17 52 L30 43 Z"/>
+    <path d="M37 40 L49 49 L47 52 L34 43 Z"/>
+  </g>
+
+  <!-- Center tech line -->
+  <path
+    d="M32 18 V47"
+    stroke="#f5f7fa"
+    stroke-width="1"
+    opacity="0.65"
+  />
+
+  <!-- HUD targeting ring -->
+  <circle
+    cx="32"
+    cy="32"
+    r="27"
+    fill="none"
+    stroke="#ff2638"
+    stroke-width="1"
+    opacity="0.45"
+  />
+
+  <!-- HUD corners -->
+  <path d="M7 18V7H18" fill="none" stroke="#ff2638"/>
+  <path d="M46 7H57V18" fill="none" stroke="#ff2638"/>
+  <path d="M7 46V57H18" fill="none" stroke="#ff2638"/>
+  <path d="M46 57H57V46" fill="none" stroke="#ff2638"/>
+</svg>
