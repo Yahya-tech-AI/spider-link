@@ -104,44 +104,49 @@ function loadSavedState() {
             JSON.parse(saved);
 
         if (parsed.system) {
+
             SPIDERLINK.system = {
                 ...SPIDERLINK.system,
                 ...parsed.system
             };
+
         }
 
         if (parsed.mask) {
+
             SPIDERLINK.mask = {
                 ...SPIDERLINK.mask,
                 ...parsed.mask
             };
+
         }
 
         if (parsed.suit) {
+
             SPIDERLINK.suit = {
                 ...SPIDERLINK.suit,
                 ...parsed.suit
             };
+
         }
 
         if (parsed.ai) {
+
             SPIDERLINK.ai = {
                 ...SPIDERLINK.ai,
                 ...parsed.ai
             };
+
         }
 
         if (parsed.hud) {
+
             SPIDERLINK.hud = {
                 ...SPIDERLINK.hud,
                 ...parsed.hud
             };
-        }
 
-        /*
-         * Never restore boot as permanently complete.
-         * Every page load gets a fresh boot sequence.
-         */
+        }
 
         SPIDERLINK.boot.complete = false;
 
@@ -152,11 +157,13 @@ function loadSavedState() {
             error
         );
 
+        localStorage.removeItem(
+            STORAGE_KEY
+        );
+
     }
 
 }
-
-
 /* =========================================================
    SAVE STATE
    ========================================================= */
