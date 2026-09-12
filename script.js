@@ -55,13 +55,11 @@ const SPIDERLINK = {
    DOM HELPERS
    ========================================================= */
 
-const $ = (selector, parent = document) => {
-    return parent.querySelector(selector);
-};
+const $ = (selector, parent = document) =>
+    parent.querySelector(selector);
 
-const $$ = (selector, parent = document) => {
-    return [...parent.querySelectorAll(selector)];
-};
+const $$ = (selector, parent = document) =>
+    [...parent.querySelectorAll(selector)];
 
 
 /* =========================================================
@@ -106,49 +104,46 @@ function loadSavedState() {
             JSON.parse(saved);
 
         if (parsed.system) {
-
             SPIDERLINK.system = {
                 ...SPIDERLINK.system,
                 ...parsed.system
             };
-
         }
 
         if (parsed.mask) {
-
             SPIDERLINK.mask = {
                 ...SPIDERLINK.mask,
                 ...parsed.mask
             };
-
         }
 
         if (parsed.suit) {
-
             SPIDERLINK.suit = {
                 ...SPIDERLINK.suit,
                 ...parsed.suit
             };
-
         }
 
         if (parsed.ai) {
-
             SPIDERLINK.ai = {
                 ...SPIDERLINK.ai,
                 ...parsed.ai
             };
-
         }
 
         if (parsed.hud) {
-
             SPIDERLINK.hud = {
                 ...SPIDERLINK.hud,
                 ...parsed.hud
             };
-
         }
+
+        /*
+         * Never restore boot as permanently complete.
+         * Every page load gets a fresh boot sequence.
+         */
+
+        SPIDERLINK.boot.complete = false;
 
     } catch (error) {
 
@@ -178,7 +173,7 @@ function saveState() {
     } catch (error) {
 
         console.warn(
-            "SPIDER-LINK: Could not save state.",
+            "SPIDER-LINK: Could not save saved state.",
             error
         );
 
@@ -188,7 +183,7 @@ function saveState() {
 
 
 /* =========================================================
-   SPLASH / BOOT SYSTEM
+   SPLASH SCREEN
    ========================================================= */
 
 function createSplashScreen() {
@@ -206,18 +201,27 @@ function createSplashScreen() {
     splash.id =
         "spiderlink-splash";
 
+    splash.setAttribute(
+        "aria-label",
+        "SPIDER-LINK system initialization"
+    );
+
     splash.innerHTML = `
+
         <div class="splash-grid"></div>
 
         <div class="splash-content">
 
             <div class="splash-symbol">
+
                 <div class="splash-ring ring-one"></div>
+
                 <div class="splash-ring ring-two"></div>
 
                 <div class="splash-spider">
                     🕷
                 </div>
+
             </div>
 
             <div class="splash-brand">
@@ -229,6 +233,7 @@ function createSplashScreen() {
             </div>
 
             <div class="splash-status">
+
                 <span id="splashStatus">
                     INITIALIZING SYSTEM
                 </span>
@@ -236,13 +241,16 @@ function createSplashScreen() {
                 <span id="splashPercent">
                     0%
                 </span>
+
             </div>
 
             <div class="splash-progress">
+
                 <div
                     id="splashProgressBar"
                     class="splash-progress-bar"
                 ></div>
+
             </div>
 
             <div
@@ -253,11 +261,10 @@ function createSplashScreen() {
             </div>
 
         </div>
+
     `;
 
     document.body.prepend(splash);
-
-    addSplashStyles();
 
     return splash;
 
@@ -265,250 +272,7 @@ function createSplashScreen() {
 
 
 /* =========================================================
-   SPLASH STYLES
-   ========================================================= */
-
-function addSplashStyles() {
-
-    if ($("#spiderlink-splash-styles")) {
-        return;
-    }
-
-    const style =
-        document.createElement("style");
-
-    style.id =
-        "spiderlink-splash-styles";
-
-    style.textContent = `
-
-        #spiderlink-splash {
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(255,38,56,.10),
-                    transparent 32%
-                ),
-                #030405;
-            color: #f5f7fa;
-            overflow: hidden;
-            transition:
-                opacity .7s ease,
-                visibility .7s ease;
-        }
-
-        #spiderlink-splash.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        .splash-grid {
-            position: absolute;
-            inset: 0;
-            opacity: .14;
-            background-image:
-                linear-gradient(
-                    rgba(255,255,255,.06) 1px,
-                    transparent 1px
-                ),
-                linear-gradient(
-                    90deg,
-                    rgba(255,255,255,.06) 1px,
-                    transparent 1px
-                );
-            background-size: 42px 42px;
-            mask-image:
-                radial-gradient(
-                    circle at center,
-                    black,
-                    transparent 75%
-                );
-        }
-
-        .splash-content {
-            position: relative;
-            z-index: 2;
-            width: min(460px, 88vw);
-            text-align: center;
-        }
-
-        .splash-symbol {
-            position: relative;
-            width: 130px;
-            height: 130px;
-            margin: 0 auto 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .splash-spider {
-            position: relative;
-            z-index: 3;
-            font-size: 54px;
-            color: #ff2638;
-            filter:
-                drop-shadow(
-                    0 0 12px
-                    rgba(255,38,56,.8)
-                );
-            animation:
-                splashSpiderPulse
-                1.8s ease-in-out infinite;
-        }
-
-        .splash-ring {
-            position: absolute;
-            border: 1px solid
-                rgba(255,38,56,.5);
-            border-radius: 50%;
-            inset: 10px;
-        }
-
-        .ring-one {
-            animation:
-                splashSpin
-                7s linear infinite;
-        }
-
-        .ring-two {
-            inset: 25px;
-            border-style: dashed;
-            opacity: .5;
-            animation:
-                splashSpinReverse
-                5s linear infinite;
-        }
-
-        .splash-brand {
-            font-family:
-                Orbitron,
-                Inter,
-                Arial,
-                sans-serif;
-            font-size: clamp(25px, 6vw, 42px);
-            font-weight: 800;
-            letter-spacing: .18em;
-            color: #f5f7fa;
-        }
-
-        .splash-subtitle {
-            margin-top: 9px;
-            font-family:
-                Orbitron,
-                Inter,
-                Arial,
-                sans-serif;
-            font-size: 9px;
-            letter-spacing: .32em;
-            color: #ff2638;
-        }
-
-        .splash-status {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 42px;
-            margin-bottom: 8px;
-            font-family:
-                Orbitron,
-                Inter,
-                Arial,
-                sans-serif;
-            font-size: 8px;
-            letter-spacing: .13em;
-            color: rgba(245,247,250,.65);
-        }
-
-        #splashPercent {
-            color: #49ff9b;
-        }
-
-        .splash-progress {
-            height: 3px;
-            background:
-                rgba(255,255,255,.08);
-            overflow: hidden;
-        }
-
-        .splash-progress-bar {
-            width: 0%;
-            height: 100%;
-            background: #ff2638;
-            box-shadow:
-                0 0 14px
-                rgba(255,38,56,.8);
-            transition: width .18s ease;
-        }
-
-        .splash-log {
-            min-height: 20px;
-            margin-top: 15px;
-            font-family:
-                "Courier New",
-                monospace;
-            font-size: 9px;
-            letter-spacing: .08em;
-            color: rgba(245,247,250,.38);
-        }
-
-        @keyframes splashSpin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes splashSpinReverse {
-            from {
-                transform: rotate(360deg);
-            }
-            to {
-                transform: rotate(0deg);
-            }
-        }
-
-        @keyframes splashSpiderPulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: .8;
-            }
-
-            50% {
-                transform: scale(1.08);
-                opacity: 1;
-            }
-        }
-
-        @media (
-            prefers-reduced-motion: reduce
-        ) {
-
-            .splash-spider,
-            .ring-one,
-            .ring-two {
-                animation: none;
-            }
-
-        }
-
-    `;
-
-    document.head.appendChild(style);
-
-}
-
-
-/* =========================================================
-   BOOT LOGIC
+   SPLASH BOOT STEP
    ========================================================= */
 
 function bootStep(
@@ -520,7 +284,7 @@ function bootStep(
 
     return new Promise((resolve) => {
 
-        setTimeout(() => {
+        window.setTimeout(() => {
 
             const progress =
                 $("#splashProgressBar");
@@ -535,23 +299,31 @@ function bootStep(
                 $("#splashLog");
 
             if (progress) {
+
                 progress.style.width =
                     `${percent}%`;
+
             }
 
             if (percentText) {
+
                 percentText.textContent =
                     `${percent}%`;
+
             }
 
             if (statusText) {
+
                 statusText.textContent =
                     status;
+
             }
 
             if (logText) {
+
                 logText.textContent =
                     log;
+
             }
 
             resolve();
@@ -563,6 +335,38 @@ function bootStep(
 }
 
 
+/* =========================================================
+   SPLASH EXIT
+   ========================================================= */
+
+function closeSplashScreen(splash) {
+
+    if (!splash) {
+        return;
+    }
+
+    splash.classList.add(
+        "hidden"
+    );
+
+    document.body.style.overflow =
+        "";
+
+    window.setTimeout(() => {
+
+        if (splash.isConnected) {
+            splash.remove();
+        }
+
+    }, 800);
+
+}
+
+
+/* =========================================================
+   BOOT SEQUENCE
+   ========================================================= */
+
 async function runBootSequence() {
 
     const splash =
@@ -571,11 +375,23 @@ async function runBootSequence() {
     document.body.style.overflow =
         "hidden";
 
+    /*
+     * Small initial pause makes
+     * the splash feel intentional.
+     */
+
+    await bootStep(
+        4,
+        "INITIALIZING",
+        "SPIDER-LINK BOOT SEQUENCE STARTING...",
+        150
+    );
+
     await bootStep(
         12,
         "POWER CORE",
         "POWER CORE INITIALIZED...",
-        120
+        160
     );
 
     await bootStep(
@@ -609,7 +425,7 @@ async function runBootSequence() {
     await bootStep(
         84,
         "AI CORE",
-        `${SPIDERLINK.ai.name} AI CORE INITIALIZING...`,
+        `${escapeHTML(SPIDERLINK.ai.name)} AI CORE INITIALIZING...`,
         180
     );
 
@@ -624,7 +440,7 @@ async function runBootSequence() {
         100,
         "SYSTEM ONLINE",
         "SPIDER-LINK READY.",
-        240
+        260
     );
 
     SPIDERLINK.boot.complete =
@@ -634,19 +450,16 @@ async function runBootSequence() {
 
     await new Promise((resolve) => {
 
-        setTimeout(resolve, 500);
+        window.setTimeout(
+            resolve,
+            650
+        );
 
     });
 
-    splash.classList.add("hidden");
-
-    document.body.style.overflow = "";
-
-    setTimeout(() => {
-
-        splash.remove();
-
-    }, 800);
+    closeSplashScreen(
+        splash
+    );
 
 }
 
@@ -682,9 +495,6 @@ const systemOnlineElements =
 const navLinks =
     $$(".nav-links a");
 
-const buttons =
-    $$("button");
-
 
 /* =========================================================
    AI NAME SYSTEM
@@ -696,18 +506,24 @@ function updateAINameUI() {
         SPIDERLINK.ai.name || "LARA";
 
     if (heroAIName) {
+
         heroAIName.textContent =
             name;
+
     }
 
     if (aiNameDisplay) {
+
         aiNameDisplay.textContent =
             name;
+
     }
 
     if (aiNameInput) {
+
         aiNameInput.value =
             name;
+
     }
 
     if (commandAI) {
@@ -719,6 +535,10 @@ function updateAINameUI() {
 
 }
 
+
+/* =========================================================
+   SAVE AI NAME
+   ========================================================= */
 
 function saveAIName() {
 
@@ -769,7 +589,11 @@ if (aiNameInput) {
         (event) => {
 
             if (event.key === "Enter") {
+
+                event.preventDefault();
+
                 saveAIName();
+
             }
 
         }
@@ -779,7 +603,7 @@ if (aiNameInput) {
 
 
 /* =========================================================
-   HUD CONSOLE
+   HUD DATA
    ========================================================= */
 
 const HUD_DATA = {
@@ -822,12 +646,20 @@ const HUD_DATA = {
 };
 
 
+/* =========================================================
+   HUD HEADER
+   ========================================================= */
+
 function getHUDMainHeader() {
 
     return $(".hud-main-header");
 
 }
 
+
+/* =========================================================
+   HUD SCREEN MESSAGE
+   ========================================================= */
 
 function showHUDPanelMessage(panel) {
 
@@ -869,10 +701,16 @@ function showHUDPanelMessage(panel) {
         }
     );
 
-    screen.appendChild(label);
+    screen.appendChild(
+        label
+    );
 
 }
 
+
+/* =========================================================
+   SET HUD PANEL
+   ========================================================= */
 
 function setHUDPanel(panel) {
 
@@ -909,18 +747,24 @@ function setHUDPanel(panel) {
             $("p", header);
 
         if (title) {
+
             title.textContent =
                 HUD_DATA[panel].title;
+
         }
 
         if (description) {
+
             description.textContent =
                 HUD_DATA[panel].description;
+
         }
 
     }
 
-    showHUDPanelMessage(panel);
+    showHUDPanelMessage(
+        panel
+    );
 
     saveState();
 
@@ -989,13 +833,9 @@ function formatSuitName(suit) {
 }
 
 
-/*
- * IMPORTANT:
- * notify = true when the user manually
- * changes suit.
- *
- * notify = false during startup.
- */
+/* =========================================================
+   SET SUIT
+   ========================================================= */
 
 function setSuit(
     suit,
@@ -1042,11 +882,6 @@ function setSuit(
 
     saveState();
 
-    /*
-     * ONLY notify when a real
-     * user action happens.
-     */
-
     if (notify) {
 
         showNotification(
@@ -1059,6 +894,10 @@ function setSuit(
 
 }
 
+
+/* =========================================================
+   UPDATE SUIT UI
+   ========================================================= */
 
 function updateSuitUI(suit) {
 
@@ -1101,10 +940,17 @@ suitCards.forEach((card) => {
 
 function updateSystemStatus() {
 
-    SPIDERLINK.system.battery -=
+    /*
+     * Simulated telemetry.
+     */
+
+    if (
         Math.random() < 0.15
-            ? 1
-            : 0;
+    ) {
+
+        SPIDERLINK.system.battery -= 1;
+
+    }
 
     if (
         SPIDERLINK.system.battery < 20
@@ -1213,7 +1059,7 @@ function updateTelemetryUI() {
 }
 
 
-setInterval(
+window.setInterval(
     updateSystemStatus,
     4000
 );
@@ -1240,8 +1086,10 @@ function updateOnlineIndicators() {
                 );
 
                 if (text) {
+
                     text.textContent =
                         "SYSTEM ONLINE";
+
                 }
 
             } else {
@@ -1251,8 +1099,10 @@ function updateOnlineIndicators() {
                 );
 
                 if (text) {
+
                     text.textContent =
                         "SYSTEM OFFLINE";
+
                 }
 
             }
@@ -1312,7 +1162,8 @@ function createNotificationElement() {
             transform:
                 "translateY(10px)",
             transition:
-                "opacity .2s ease, transform .2s ease"
+                "opacity .2s ease, transform .2s ease",
+            pointerEvents: "none"
         }
     );
 
@@ -1344,7 +1195,7 @@ function showNotification(message) {
     );
 
     notificationTimer =
-        setTimeout(() => {
+        window.setTimeout(() => {
 
             notification.style.opacity =
                 "0";
@@ -1396,9 +1247,14 @@ function initializeButtonRipples() {
                     }
                 );
 
-                button.style.position =
-                    button.style.position ||
-                    "relative";
+                if (
+                    !button.style.position
+                ) {
+
+                    button.style.position =
+                        "relative";
+
+                }
 
                 button.style.overflow =
                     "hidden";
@@ -1419,7 +1275,7 @@ function initializeButtonRipples() {
                     }
                 );
 
-                setTimeout(
+                window.setTimeout(
                     () => ripple.remove(),
                     450
                 );
@@ -1482,14 +1338,13 @@ function initializeNavigation() {
    ACTIVE NAVIGATION
    ========================================================= */
 
-const sections =
-    $$("section[id]");
-
-
 function updateActiveNavigation() {
 
     let current =
         "";
+
+    const sections =
+        $$("section[id]");
 
     const scrollPosition =
         window.scrollY + 160;
@@ -1623,7 +1478,7 @@ function processAICommand(
 ) {
 
     const cleanCommand =
-        command
+        String(command)
             .trim()
             .toLowerCase();
 
@@ -1637,6 +1492,7 @@ function processAICommand(
 
     let response =
         "COMMAND RECOGNIZED.";
+
 
     if (
         cleanCommand.includes(
@@ -1652,6 +1508,7 @@ function processAICommand(
 
     }
 
+
     else if (
         cleanCommand.includes(
             "battery"
@@ -1662,6 +1519,7 @@ function processAICommand(
             `BATTERY LEVEL ${SPIDERLINK.system.battery}%`;
 
     }
+
 
     else if (
         cleanCommand.includes(
@@ -1676,6 +1534,7 @@ function processAICommand(
 
     }
 
+
     else if (
         cleanCommand.includes(
             "camera"
@@ -1688,6 +1547,7 @@ function processAICommand(
                 : "CAMERA SYSTEM OFFLINE.";
 
     }
+
 
     else if (
         cleanCommand.includes(
@@ -1702,6 +1562,7 @@ function processAICommand(
             `HELLO. ${SPIDERLINK.ai.name} AI CORE IS ONLINE.`;
 
     }
+
 
     else if (
         cleanCommand.includes(
@@ -1721,6 +1582,7 @@ function processAICommand(
 
     }
 
+
     else if (
         cleanCommand.includes(
             "normal"
@@ -1739,6 +1601,7 @@ function processAICommand(
 
     }
 
+
     else if (
         cleanCommand.includes(
             aiName
@@ -1750,6 +1613,7 @@ function processAICommand(
 
     }
 
+
     showNotification(
         response
     );
@@ -1758,6 +1622,10 @@ function processAICommand(
 
 }
 
+
+/* =========================================================
+   AI COMMAND INPUT
+   ========================================================= */
 
 function initializeAICommands() {
 
@@ -1793,9 +1661,10 @@ function initializeAICommands() {
         (event) => {
 
             if (
-                event.key ===
-                "Enter"
+                event.key === "Enter"
             ) {
+
+                event.preventDefault();
 
                 processAICommand(
                     input.value
@@ -1847,10 +1716,10 @@ function initializeHUDParallax() {
                 rect.height;
 
             const rotateX =
-                (y - .5) * -5;
+                (y - 0.5) * -5;
 
             const rotateY =
-                (x - .5) * 5;
+                (x - 0.5) * 5;
 
             hudFrame.style.transform =
                 `perspective(900px)
@@ -1916,7 +1785,7 @@ function initializeAnimations() {
 
             },
             {
-                threshold: .12
+                threshold: 0.12
             }
         );
 
@@ -1948,8 +1817,15 @@ function initializeAnimations() {
 
 function addVisibilityStyles() {
 
+    if ($("#spiderlink-visibility-styles")) {
+        return;
+    }
+
     const style =
         document.createElement("style");
+
+    style.id =
+        "spiderlink-visibility-styles";
 
     style.textContent = `
 
@@ -2000,15 +1876,14 @@ function initializeKeyboardShortcuts() {
             const typing =
                 active &&
                 (
-                    active.tagName ===
-                    "INPUT" ||
-                    active.tagName ===
-                    "TEXTAREA"
+                    active.tagName === "INPUT" ||
+                    active.tagName === "TEXTAREA"
                 );
 
             if (typing) {
                 return;
             }
+
 
             /*
              * M
@@ -2016,8 +1891,7 @@ function initializeKeyboardShortcuts() {
              */
 
             if (
-                event.key.toLowerCase() ===
-                "m"
+                event.key.toLowerCase() === "m"
             ) {
 
                 cycleMaskExpression();
@@ -2027,6 +1901,7 @@ function initializeKeyboardShortcuts() {
                 );
 
             }
+
 
             /*
              * 1–5
@@ -2060,21 +1935,10 @@ function initializeKeyboardShortcuts() {
 
 
 /* =========================================================
-   MAIN INITIALIZATION
+   INITIALIZE UI
    ========================================================= */
 
-async function initializeSPIDERLINK() {
-
-    /*
-     * Load saved user state first.
-     */
-
-    loadSavedState();
-
-
-    /*
-     * Prepare visual systems.
-     */
+function initializeUI() {
 
     updateAINameUI();
 
@@ -2086,31 +1950,23 @@ async function initializeSPIDERLINK() {
         SPIDERLINK.hud.activePanel
     );
 
-
-    /*
-     * IMPORTANT:
-     *
-     * false prevents:
-     *
-     * "Suit profile loaded → Classic"
-     *
-     * from appearing on every page load.
-     */
-
     setSuit(
         SPIDERLINK.suit.current,
         false
     );
 
-
     setMaskExpression(
         SPIDERLINK.mask.expression
     );
 
+}
 
-    /*
-     * Initialize interactive systems.
-     */
+
+/* =========================================================
+   INITIALIZE INTERACTIONS
+   ========================================================= */
+
+function initializeInteractions() {
 
     initializeButtonRipples();
 
@@ -2128,10 +1984,14 @@ async function initializeSPIDERLINK() {
 
     updateActiveNavigation();
 
+}
 
-    /*
-     * Console diagnostics.
-     */
+
+/* =========================================================
+   CONSOLE DIAGNOSTICS
+   ========================================================= */
+
+function printDiagnostics() {
 
     console.log(
         "%cSPIDER-LINK",
@@ -2144,12 +2004,49 @@ async function initializeSPIDERLINK() {
     );
 
     console.log(
-        "Prototype interface initialized."
+        "%cPrototype interface initialized.",
+        "color:#9aa3ad;font-size:11px;"
     );
+
+}
+
+
+/* =========================================================
+   MAIN INITIALIZATION
+   ========================================================= */
+
+async function initializeSPIDERLINK() {
+
+    /*
+     * Load persistent configuration.
+     */
+
+    loadSavedState();
 
 
     /*
-     * Start splash sequence.
+     * Build UI state.
+     */
+
+    initializeUI();
+
+
+    /*
+     * Start interactions.
+     */
+
+    initializeInteractions();
+
+
+    /*
+     * Diagnostics.
+     */
+
+    printDiagnostics();
+
+
+    /*
+     * Run cinematic boot.
      */
 
     await runBootSequence();
@@ -2158,14 +2055,30 @@ async function initializeSPIDERLINK() {
 
 
 /* =========================================================
-   START
+   START SYSTEM
    ========================================================= */
 
-initializeSPIDERLINK();
+if (
+    document.readyState === "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeSPIDERLINK,
+        {
+            once: true
+        }
+    );
+
+} else {
+
+    initializeSPIDERLINK();
+
+}
 
 
 /* =========================================================
-   DEBUG API
+   PUBLIC DEBUG API
    ========================================================= */
 
 window.SPIDERLINK =
@@ -2182,6 +2095,9 @@ window.setHUDPanel =
 
 window.processAICommand =
     processAICommand;
+
+window.runSPIDERLINKBoot =
+    runBootSequence;
 
 
 /* =========================================================
