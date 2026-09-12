@@ -616,6 +616,3 @@ A system where:
 **Build the future.**
 
 **Become the system.**
-
-```
-```
