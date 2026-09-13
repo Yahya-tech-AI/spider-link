@@ -1,826 +1,1499 @@
-(() => {
-  "use strict";
-
   /*
    * ============================================================
    * SPIDER-LINK
    * Original futuristic wearable-tech interface
-   * Version: 0.1.0
+   * Version: 0.2.0
    *
    * This is a software/UI prototype.
    * No dangerous hardware/projectile systems are implemented.
    * ============================================================
    */
 
-  const STORAGE_KEY = "spiderlink_v1";
-
-  const VALID_SUITS = [
-    "CLASSIC",
-    "SHADOW",
-    "APEX",
-    "CUSTOM"
-  ];
-
-  const VALID_HUDS = [
-    "MINIMAL",
-    "TACTICAL",
-    "STEALTH",
-    "DEVELOPER"
-  ];
-
-  const state = {
-    suit: "CLASSIC",
-    hud: "MINIMAL",
-    aiName: ""
-  };
-
-  let notificationTimer = null;
-  let splashFinished = false;
-
-  /*
-   * ------------------------------------------------------------
-   * DOM HELPERS
-   * ------------------------------------------------------------
-   */
-
-  const $ = (selector, root = document) => {
-    return root.querySelector(selector);
-  };
-
-  const $$ = (selector, root = document) => {
-    return Array.from(root.querySelectorAll(selector));
-  };
-
-  /*
-   * ------------------------------------------------------------
-   * STORAGE
-   * ------------------------------------------------------------
-   */
-
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-
-      if (!raw) {
-        return;
-      }
-
-      const saved = JSON.parse(raw);
-
-      if (
-        saved &&
-        typeof saved.suit === "string" &&
-        VALID_SUITS.includes(saved.suit.toUpperCase())
-      ) {
-        state.suit = saved.suit.toUpperCase();
-      }
-
-      if (
-        saved &&
-        typeof saved.hud === "string" &&
-        VALID_HUDS.includes(saved.hud.toUpperCase())
-      ) {
-        state.hud = saved.hud.toUpperCase();
-      }
-
-      if (
-        saved &&
-        typeof saved.aiName === "string"
-      ) {
-        state.aiName = saved.aiName
-          .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 20);
-      }
-    } catch (error) {
-      console.warn("SPIDER-LINK: storage could not be loaded.", error);
-    }
-  }
-
-  function saveState() {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(state)
-      );
-    } catch (error) {
-      console.warn("SPIDER-LINK: storage could not be saved.", error);
-    }
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * NOTIFICATION SYSTEM
-   * ------------------------------------------------------------
-   */
-
-  function showNotification(message) {
-    const notification = $("#notification");
-    const notificationText = $("#notificationText");
-
-    if (!notification || !notificationText) {
-      console.info(`SPIDER-LINK → ${message}`);
-      return;
-    }
-
-    notificationText.textContent = message;
-
-    notification.classList.remove("show");
-
-    // Force reflow so repeated notifications animate correctly.
-    void notification.offsetWidth;
-
-    notification.classList.add("show");
-
-    clearTimeout(notificationTimer);
-
-    notificationTimer = setTimeout(() => {
-      notification.classList.remove("show");
-    }, 2400);
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * STATUS HELPERS
-   * ------------------------------------------------------------
-   */
-
-  function setText(selector, value) {
-    const element = $(selector);
-
-    if (element) {
-      element.textContent = value;
-    }
-  }
-
-  function updateSystemStatus() {
-    setText("#hudMode", state.hud);
-    setText("#hudSuit", state.suit);
-
-    setText(
-      "#hudAI",
-      state.aiName ? "ONLINE" : "OFFLINE"
-    );
-
-    setText(
-      "#heroSuitName",
-      state.suit
-    );
-
-    setText(
-      "#selectedSuitName",
-      state.suit
-    );
-
-    setText(
-      "#heroAIName",
-      state.aiName || "UNCONFIGURED"
-    );
-
-    setText(
-      "#aiNameDisplay",
-      state.aiName || "UNCONFIGURED"
-    );
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * SUIT SYSTEM
-   * ------------------------------------------------------------
-   *
-   * Suit selection is controlled ONLY by data-suit.
-   * Nothing is inferred from headings or card text.
-   */
-
-  function setSuit(suit, notify = true) {
-    const normalized = String(suit || "")
-      .trim()
-      .toUpperCase();
-
-    if (!VALID_SUITS.includes(normalized)) {
-      console.warn(
-        `SPIDER-LINK: invalid suit "${suit}".`
-      );
-      return;
-    }
-
-    state.suit = normalized;
-
-    const suitCards = $$(".suit-card");
-
-    suitCards.forEach((card) => {
-      const cardSuit = String(
-        card.dataset.suit || ""
-      ).toUpperCase();
-
-      const isActive = cardSuit === state.suit;
-
-      card.classList.toggle(
-        "active",
-        isActive
-      );
-
-      const status = $(".suit-status", card);
-
-      if (status) {
-        status.textContent = isActive
-          ? "SELECTED"
-          : "AVAILABLE";
-      }
-
-      card.setAttribute(
-        "aria-pressed",
-        String(isActive)
-      );
-    });
-
-    updateSystemStatus();
-    saveState();
-
-    if (notify) {
-      showNotification(
-        `SUIT SYSTEM → ${state.suit}`
-      );
-    }
-
-    console.log(
-      `SPIDER-LINK SUIT → ${state.suit}`
-    );
-  }
-
-  function initializeSuits() {
-    const suitCards = $$(".suit-card");
-
-    suitCards.forEach((card) => {
-      card.addEventListener("click", () => {
-        setSuit(card.dataset.suit);
-      });
-
-      card.addEventListener("keydown", (event) => {
-        if (
-          event.key === "Enter" ||
-          event.key === " "
-        ) {
-          event.preventDefault();
-          setSuit(card.dataset.suit);
-        }
-      });
-    });
-
-    setSuit(state.suit, false);
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * HUD SYSTEM
-   * ------------------------------------------------------------
-   */
-
-  function setHUD(hud, notify = true) {
-    const normalized = String(hud || "")
-      .trim()
-      .toUpperCase();
-
-    if (!VALID_HUDS.includes(normalized)) {
-      console.warn(
-        `SPIDER-LINK: invalid HUD "${hud}".`
-      );
-      return;
-    }
-
-    state.hud = normalized;
-
-    const hudButtons = $$(".hud-option");
-
-    hudButtons.forEach((button) => {
-      const buttonHUD = String(
-        button.dataset.hud || ""
-      ).toUpperCase();
-
-      const isActive =
-        buttonHUD === state.hud;
-
-      button.classList.toggle(
-        "active",
-        isActive
-      );
-
-      button.setAttribute(
-        "aria-pressed",
-        String(isActive)
-      );
-    });
-
-    updateSystemStatus();
-    saveState();
-
-    if (notify) {
-      showNotification(
-        `HUD MODE → ${state.hud}`
-      );
-    }
-  }
-
-  function initializeHUD() {
-    const hudButtons = $$(".hud-option");
-
-    hudButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        setHUD(button.dataset.hud);
-      });
-    });
-
-    setHUD(state.hud, false);
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * AI SYSTEM
-   * ------------------------------------------------------------
-   */
-
-  function cleanAIName(value) {
-    return String(value || "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 20);
-  }
-
-  function updateAIUI() {
-    const configured =
-      Boolean(state.aiName);
-
-    const displayName =
-      state.aiName || "UNCONFIGURED";
-
-    setText(
-      "#heroAIName",
-      displayName
-    );
-
-    setText(
-      "#aiNameDisplay",
-      displayName
-    );
-
-    setText(
-      "#hudAI",
-      configured
-        ? "ONLINE"
-        : "OFFLINE"
-    );
-  }
-
-  function saveAIName() {
-    const input = $("#aiNameInput");
-
-    if (!input) {
-      return;
-    }
-
-    const name = cleanAIName(input.value);
-
-    if (!name) {
-      showNotification(
-        "ENTER AN AI DESIGNATION"
-      );
-
-      input.focus();
-      return;
-    }
-
-    state.aiName = name;
-
-    saveState();
-    updateAIUI();
-
-    input.value = "";
-
-    showNotification(
-      `AI LINK → ${name.toUpperCase()}`
-    );
-  }
-
-  function initializeAI() {
-    const saveButton = $("#saveAI");
-    const input = $("#aiNameInput");
-    const commandButton = $("#commandAI");
-
-    if (saveButton) {
-      saveButton.addEventListener(
-        "click",
-        saveAIName
-      );
-    }
-
-    if (input) {
-      input.addEventListener(
-        "keydown",
-        (event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            saveAIName();
-          }
-        }
-      );
-    }
-
-    if (commandButton) {
-      commandButton.addEventListener(
-        "click",
-        () => {
-          if (!state.aiName) {
-            showNotification(
-              "AI NOT CONFIGURED"
-            );
-            return;
-          }
-
-          showNotification(
-            `${state.aiName.toUpperCase()} → SYSTEM NOMINAL`
-          );
-        }
-      );
-    }
-
-    updateAIUI();
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * NAVIGATION
-   * ------------------------------------------------------------
-   */
-
-  function initializeNavigation() {
-    const links = $$(
-      'a[href^="#"]'
-    );
-
-    links.forEach((link) => {
-      link.addEventListener(
-        "click",
-        (event) => {
-          const targetID =
-            link.getAttribute("href");
-
-          if (
-            !targetID ||
-            targetID === "#"
-          ) {
-            return;
-          }
-
-          const target =
-            $(targetID);
-
-          if (!target) {
-            return;
-          }
-
-          event.preventDefault();
-
-          target.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-        }
-      );
-    });
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * SMALL INTERFACE EFFECTS
-   * ------------------------------------------------------------
-   */
-
-  function initializeCardInteractions() {
-    const cards = $$(
-      ".system-card, .architecture-card, .safety-card"
-    );
-
-    cards.forEach((card) => {
-      card.addEventListener(
-        "mouseenter",
-        () => {
-          card.classList.add(
-            "is-hovered"
-          );
-        }
-      );
-
-      card.addEventListener(
-        "mouseleave",
-        () => {
-          card.classList.remove(
-            "is-hovered"
-          );
-        }
-      );
-    });
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * KEYBOARD SHORTCUTS
-   * ------------------------------------------------------------
-   */
-
-  function initializeKeyboardControls() {
-    document.addEventListener(
-      "keydown",
-      (event) => {
-        // Ignore shortcuts while typing.
-        const activeElement =
-          document.activeElement;
-
-        const isTyping =
-          activeElement &&
-          (
-            activeElement.tagName === "INPUT" ||
-            activeElement.tagName === "TEXTAREA" ||
-            activeElement.isContentEditable
-          );
-
-        if (isTyping) {
-          return;
-        }
-
-        switch (event.key.toLowerCase()) {
-          case "1":
-            setHUD("MINIMAL");
-            break;
-
-          case "2":
-            setHUD("TACTICAL");
-            break;
-
-          case "3":
-            setHUD("STEALTH");
-            break;
-
-          case "4":
-            setHUD("DEVELOPER");
-            break;
-
-          case "q":
-            setSuit("CLASSIC");
-            break;
-
-          case "w":
-            setSuit("SHADOW");
-            break;
-
-          case "e":
-            setSuit("APEX");
-            break;
-
-          case "r":
-            setSuit("CUSTOM");
-            break;
-
-          default:
-            break;
-        }
-      }
-    );
-  }
-
-  /*
-   * ------------------------------------------------------------
-   * SPLASH SCREEN
-   * ------------------------------------------------------------
-   */
-
-  function updateSplash(
-    status,
-    progress
-  ) {
-    setText(
-      "#splashStatus",
-      status
-    );
-
-    setText(
-      "#splashPercent",
-      `${Math.round(progress)}%`
-    );
-
-    const progressBar =
-      $("#splashProgressBar");
-
-    if (progressBar) {
-      progressBar.style.width =
-        `${Math.max(
-          0,
-          Math.min(100, progress)
-        )}%`;
-    }
-  }
-
-  function wait(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-  }
-
-  async function runSplash() {
-    if (splashFinished) {
-      return;
-    }
-
-    splashFinished = true;
-
-    const splash =
-      $("#splashScreen");
-
-    // If splash markup doesn't exist,
-    // the rest of the website still works.
-    if (!splash) {
-      return;
-    }
-
-    const bootSequence = [
-      {
-        progress: 8,
-        status: "INITIALIZING CORE"
-      },
-      {
-        progress: 24,
-        status: "CHECKING INTERFACE"
-      },
-      {
-        progress: 42,
-        status: "LINKING SYSTEMS"
-      },
-      {
-        progress: 61,
-        status: "LOADING HUD"
-      },
-      {
-        progress: 78,
-        status: "SYNCING SUIT"
-      },
-      {
-        progress: 92,
-        status: "VERIFYING AI LINK"
-      },
-      {
-        progress: 100,
-        status: "SYSTEM READY"
-      }
+(() => {
+    "use strict";
+
+    const STORAGE_KEY = "spiderlink_v2";
+
+    const VALID_SUITS = [
+        "CLASSIC",
+        "SHADOW",
+        "APEX",
+        "CUSTOM"
     ];
 
-    updateSplash(
-      "INITIALIZING CORE",
-      0
-    );
+    const VALID_HUDS = [
+        "MINIMAL",
+        "TACTICAL",
+        "STEALTH",
+        "DEVELOPER"
+    ];
 
-    await wait(180);
+    const state = {
+        suit: "CLASSIC",
+        hud: "MINIMAL",
+        aiName: "",
+        battery: 87,
+        connection: 2
+    };
 
-    for (const step of bootSequence) {
-      updateSplash(
-        step.status,
-        step.progress
-      );
+    let notificationTimer = null;
 
-      await wait(180);
+    /* ========================================================
+       HELPERS
+       ======================================================== */
+
+    const $ = (selector, root = document) =>
+        root.querySelector(selector);
+
+    const $$ = (selector, root = document) =>
+        Array.from(root.querySelectorAll(selector));
+
+    function setText(selector, value) {
+        const element = $(selector);
+
+        if (element) {
+            element.textContent = value;
+        }
     }
 
-    await wait(300);
+    /* ========================================================
+       STORAGE
+       ======================================================== */
 
-    splash.classList.add("hidden");
+    function loadState() {
+        try {
+            const saved = JSON.parse(
+                localStorage.getItem(STORAGE_KEY) || "{}"
+            );
 
-    await wait(500);
+            if (
+                typeof saved.suit === "string" &&
+                VALID_SUITS.includes(
+                    saved.suit.toUpperCase()
+                )
+            ) {
+                state.suit =
+                    saved.suit.toUpperCase();
+            }
 
-    // Remove from accessibility tree after
-    // the visual transition is complete.
-    splash.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-  }
+            if (
+                typeof saved.hud === "string" &&
+                VALID_HUDS.includes(
+                    saved.hud.toUpperCase()
+                )
+            ) {
+                state.hud =
+                    saved.hud.toUpperCase();
+            }
 
-  /*
-   * ------------------------------------------------------------
-   * SYSTEM RESET
-   * ------------------------------------------------------------
-   *
-   * Useful while developing.
-   * Run in browser console:
-   *
-   * SPIDERLINK.reset()
-   */
+            if (
+                typeof saved.aiName === "string"
+            ) {
+                state.aiName =
+                    saved.aiName
+                        .replace(/\s+/g, " ")
+                        .trim()
+                        .slice(0, 20);
+            }
 
-  function resetSystem() {
-    try {
-      localStorage.removeItem(
-        STORAGE_KEY
-      );
-    } catch (error) {
-      console.warn(
-        "SPIDER-LINK: reset failed.",
-        error
-      );
+        } catch (error) {
+            console.warn(
+                "SPIDER-LINK storage error:",
+                error
+            );
+        }
     }
 
-    state.suit = "CLASSIC";
-    state.hud = "MINIMAL";
-    state.aiName = "";
+    function saveState() {
+        try {
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({
+                    suit: state.suit,
+                    hud: state.hud,
+                    aiName: state.aiName
+                })
+            );
+        } catch (error) {
+            console.warn(
+                "SPIDER-LINK save error:",
+                error
+            );
+        }
+    }
 
-    setSuit("CLASSIC", false);
-    setHUD("MINIMAL", false);
-    updateAIUI();
+    /* ========================================================
+       NOTIFICATIONS
+       ======================================================== */
 
-    showNotification(
-      "SYSTEM RESET COMPLETE"
-    );
-  }
+    function showNotification(message) {
+        const notification =
+            $("#notification");
 
-  /*
-   * ------------------------------------------------------------
-   * DEBUG API
-   * ------------------------------------------------------------
-   */
+        const text =
+            $("#notificationText");
 
-  window.SPIDERLINK = {
-    state,
+        if (!notification || !text) {
+            console.log(
+                `SPIDER-LINK → ${message}`
+            );
+            return;
+        }
 
-    setSuit,
-    setHUD,
+        text.textContent = message;
 
-    showNotification,
+        notification.classList.remove(
+            "show"
+        );
 
-    reset: resetSystem,
+        void notification.offsetWidth;
 
-    version: "0.1.0"
-  };
+        notification.classList.add(
+            "show"
+        );
 
-  /*
-   * ------------------------------------------------------------
-   * MAIN INITIALIZATION
-   * ------------------------------------------------------------
-   */
+        clearTimeout(
+            notificationTimer
+        );
 
-  async function initializeSPIDERLINK() {
-    console.log(
-      "%cSPIDER-LINK",
-      "font-weight:900;font-size:24px;"
-    );
+        notificationTimer =
+            setTimeout(() => {
+                notification.classList.remove(
+                    "show"
+                );
+            }, 2400);
+    }
 
-    console.log(
-      "Initializing SPIDER-LINK v0.1.0..."
-    );
+    /* ========================================================
+       SCROLL PROGRESS
+       ======================================================== */
 
-    loadState();
+    function initializeScrollProgress() {
+        let ticking = false;
 
-    initializeSuits();
-    initializeHUD();
-    initializeAI();
-    initializeNavigation();
-    initializeCardInteractions();
-    initializeKeyboardControls();
+        function update() {
+            const scrollTop =
+                window.scrollY;
 
-    updateSystemStatus();
+            const documentHeight =
+                document.documentElement
+                    .scrollHeight -
+                window.innerHeight;
 
-    console.log(
-      `SUIT → ${state.suit}`
-    );
+            const progress =
+                documentHeight > 0
+                    ? (
+                        scrollTop /
+                        documentHeight
+                    ) * 100
+                    : 0;
 
-    console.log(
-      `HUD → ${state.hud}`
-    );
+            const bar =
+                $(".scroll-progress");
 
-    console.log(
-      `AI → ${
-        state.aiName || "UNCONFIGURED"
-      }`
-    );
+            if (bar) {
+                bar.style.width =
+                    `${progress}%`;
+            }
 
-    await runSplash();
+            const navbar =
+                $(".navbar");
 
-    showNotification(
-      "SPIDER-LINK ONLINE"
-    );
-  }
+            if (navbar) {
+                navbar.classList.toggle(
+                    "scrolled",
+                    scrollTop > 25
+                );
+            }
 
-  /*
-   * ------------------------------------------------------------
-   * BOOT
-   * ------------------------------------------------------------
-   */
+            ticking = false;
+        }
 
-  if (
-    document.readyState === "loading"
-  ) {
-    document.addEventListener(
-      "DOMContentLoaded",
-      initializeSPIDERLINK,
-      { once: true }
-    );
-  } else {
-    initializeSPIDERLINK();
-  }
+        window.addEventListener(
+            "scroll",
+            () => {
+                if (!ticking) {
+                    window.requestAnimationFrame(
+                        update
+                    );
+
+                    ticking = true;
+                }
+            },
+            { passive: true }
+        );
+
+        update();
+    }
+
+    /* ========================================================
+       SCROLL REVEAL
+       ======================================================== */
+
+    function initializeScrollReveal() {
+        const elements = $$(
+            ".reveal, .reveal-left, .reveal-right"
+        );
+
+        if (!elements.length) {
+            return;
+        }
+
+        if (
+            !("IntersectionObserver" in window)
+        ) {
+            elements.forEach((element) => {
+                element.classList.add(
+                    "visible"
+                );
+            });
+
+            return;
+        }
+
+        const observer =
+            new IntersectionObserver(
+                (entries, obs) => {
+                    entries.forEach(
+                        (entry) => {
+                            if (
+                                !entry.isIntersecting
+                            ) {
+                                return;
+                            }
+
+                            entry.target.classList.add(
+                                "visible"
+                            );
+
+                            obs.unobserve(
+                                entry.target
+                            );
+                        }
+                    );
+                },
+                {
+                    threshold: 0.12,
+                    rootMargin:
+                        "0px 0px -50px 0px"
+                }
+            );
+
+        elements.forEach(
+            (element) => {
+                observer.observe(
+                    element
+                );
+            }
+        );
+    }
+
+    /* ========================================================
+       STAGGERED CHILD REVEAL
+       ======================================================== */
+
+    function initializeStagger() {
+        const groups = $$(
+            ".system-grid, .suit-grid, .architecture-grid, .safety-grid"
+        );
+
+        groups.forEach((group) => {
+            const children =
+                Array.from(
+                    group.children
+                );
+
+            children.forEach(
+                (child, index) => {
+                    child.classList.add(
+                        "stagger-item"
+                    );
+
+                    child.style.transitionDelay =
+                        `${index * 80}ms`;
+                }
+            );
+
+            if (
+                !("IntersectionObserver" in window)
+            ) {
+                children.forEach(
+                    (child) => {
+                        child.classList.add(
+                            "visible"
+                        );
+                    }
+                );
+
+                return;
+            }
+
+            const observer =
+                new IntersectionObserver(
+                    (entries, obs) => {
+                        entries.forEach(
+                            (entry) => {
+                                if (
+                                    !entry.isIntersecting
+                                ) {
+                                    return;
+                                }
+
+                                children.forEach(
+                                    (child) => {
+                                        child.classList.add(
+                                            "visible"
+                                        );
+                                    }
+                                );
+
+                                obs.unobserve(
+                                    group
+                                );
+                            }
+                        );
+                    },
+                    {
+                        threshold: 0.08
+                    }
+                );
+
+            observer.observe(group);
+        });
+    }
+
+    /* ========================================================
+       ACTIVE NAVIGATION
+       ======================================================== */
+
+    function initializeActiveNavigation() {
+        const links = $$(
+            '.nav-links a[href^="#"]'
+        );
+
+        if (!links.length) {
+            return;
+        }
+
+        const sections = links
+            .map((link) => {
+                const id =
+                    link.getAttribute(
+                        "href"
+                    );
+
+                if (
+                    !id ||
+                    id === "#"
+                ) {
+                    return null;
+                }
+
+                return $(id);
+            })
+            .filter(Boolean);
+
+        if (
+            !("IntersectionObserver" in window)
+        ) {
+            return;
+        }
+
+        const observer =
+            new IntersectionObserver(
+                (entries) => {
+                    entries.forEach(
+                        (entry) => {
+                            if (
+                                !entry.isIntersecting
+                            ) {
+                                return;
+                            }
+
+                            links.forEach(
+                                (link) => {
+                                    link.classList.remove(
+                                        "active"
+                                    );
+                                }
+                            );
+
+                            const active =
+                                links.find(
+                                    (link) =>
+                                        link.getAttribute(
+                                            "href"
+                                        ) ===
+                                        `#${entry.target.id}`
+                                );
+
+                            if (active) {
+                                active.classList.add(
+                                    "active"
+                                );
+                            }
+                        }
+                    );
+                },
+                {
+                    rootMargin:
+                        "-30% 0px -60% 0px",
+                    threshold: 0
+                }
+            );
+
+        sections.forEach(
+            (section) => {
+                observer.observe(
+                    section
+                );
+            }
+        );
+    }
+
+    /* ========================================================
+       SMOOTH NAVIGATION
+       ======================================================== */
+
+    function initializeNavigation() {
+        const links = $$(
+            'a[href^="#"]'
+        );
+
+        links.forEach((link) => {
+            link.addEventListener(
+                "click",
+                (event) => {
+                    const targetID =
+                        link.getAttribute(
+                            "href"
+                        );
+
+                    if (
+                        !targetID ||
+                        targetID === "#"
+                    ) {
+                        return;
+                    }
+
+                    const target =
+                        $(targetID);
+
+                    if (!target) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    target.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                }
+            );
+        });
+    }
+
+    /* ========================================================
+       CURSOR GLOW
+       ======================================================== */
+
+    function initializeCursorGlow() {
+        if (
+            window.matchMedia(
+                "(pointer: coarse)"
+            ).matches
+        ) {
+            return;
+        }
+
+        let glow =
+            $(".cursor-glow");
+
+        if (!glow) {
+            glow =
+                document.createElement(
+                    "div"
+                );
+
+            glow.className =
+                "cursor-glow";
+
+            document.body.appendChild(
+                glow
+            );
+        }
+
+        let mouseX = -300;
+        let mouseY = -300;
+
+        let currentX = mouseX;
+        let currentY = mouseY;
+
+        function animate() {
+            currentX +=
+                (mouseX - currentX) *
+                0.12;
+
+            currentY +=
+                (mouseY - currentY) *
+                0.12;
+
+            glow.style.left =
+                `${currentX}px`;
+
+            glow.style.top =
+                `${currentY}px`;
+
+            requestAnimationFrame(
+                animate
+            );
+        }
+
+        window.addEventListener(
+            "pointermove",
+            (event) => {
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+
+                glow.style.opacity = "1";
+            },
+            { passive: true }
+        );
+
+        document.addEventListener(
+            "mouseleave",
+            () => {
+                glow.style.opacity = "0";
+            }
+        );
+
+        animate();
+    }
+
+    /* ========================================================
+       CARD TILT
+       ======================================================== */
+
+    function initializeCardTilt() {
+        if (
+            window.matchMedia(
+                "(pointer: coarse)"
+            ).matches
+        ) {
+            return;
+        }
+
+        const cards = $$(
+            ".system-card, .architecture-card, .safety-card, .suit-card"
+        );
+
+        cards.forEach((card) => {
+            card.addEventListener(
+                "pointermove",
+                (event) => {
+                    const rect =
+                        card.getBoundingClientRect();
+
+                    const x =
+                        event.clientX -
+                        rect.left;
+
+                    const y =
+                        event.clientY -
+                        rect.top;
+
+                    const centerX =
+                        rect.width / 2;
+
+                    const centerY =
+                        rect.height / 2;
+
+                    const rotateX =
+                        ((y - centerY) /
+                            centerY) *
+                        -3;
+
+                    const rotateY =
+                        ((x - centerX) /
+                            centerX) *
+                        3;
+
+                    card.style.setProperty(
+                        "--mouse-x",
+                        `${x}px`
+                    );
+
+                    card.style.setProperty(
+                        "--mouse-y",
+                        `${y}px`
+                    );
+
+                    card.style.transform =
+                        `perspective(800px)
+                         rotateX(${rotateX}deg)
+                         rotateY(${rotateY}deg)
+                         translateY(-5px)`;
+                }
+            );
+
+            card.addEventListener(
+                "pointerleave",
+                () => {
+                    card.style.transform =
+                        "";
+                }
+            );
+        });
+    }
+
+    /* ========================================================
+       MAGNETIC BUTTONS
+       ======================================================== */
+
+    function initializeMagneticButtons() {
+        if (
+            window.matchMedia(
+                "(pointer: coarse)"
+            ).matches
+        ) {
+            return;
+        }
+
+        const buttons = $$(
+            ".primary-button, .secondary-button, .hud-option"
+        );
+
+        buttons.forEach((button) => {
+            button.addEventListener(
+                "pointermove",
+                (event) => {
+                    const rect =
+                        button.getBoundingClientRect();
+
+                    const x =
+                        event.clientX -
+                        rect.left -
+                        rect.width / 2;
+
+                    const y =
+                        event.clientY -
+                        rect.top -
+                        rect.height / 2;
+
+                    button.style.transform =
+                        `translate(
+                            ${x * 0.12}px,
+                            ${y * 0.12}px
+                        )`;
+                }
+            );
+
+            button.addEventListener(
+                "pointerleave",
+                () => {
+                    button.style.transform =
+                        "";
+                }
+            );
+        });
+    }
+
+    /* ========================================================
+       RIPPLE EFFECT
+       ======================================================== */
+
+    function initializeRipples() {
+        const elements = $$(
+            ".primary-button, .secondary-button, .hud-option"
+        );
+
+        elements.forEach((element) => {
+            element.addEventListener(
+                "click",
+                (event) => {
+                    const rect =
+                        element.getBoundingClientRect();
+
+                    const ripple =
+                        document.createElement(
+                            "span"
+                        );
+
+                    ripple.className =
+                        "ripple";
+
+                    ripple.style.left =
+                        `${event.clientX - rect.left}px`;
+
+                    ripple.style.top =
+                        `${event.clientY - rect.top}px`;
+
+                    element.appendChild(
+                        ripple
+                    );
+
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 700);
+                }
+            );
+        });
+    }
+
+    /* ========================================================
+       SUIT ENGINE
+       ======================================================== */
+
+    function setSuit(
+        suit,
+        notify = true
+    ) {
+        const normalized =
+            String(suit || "")
+                .trim()
+                .toUpperCase();
+
+        if (
+            !VALID_SUITS.includes(
+                normalized
+            )
+        ) {
+            return;
+        }
+
+        state.suit =
+            normalized;
+
+        const cards =
+            $$(".suit-card");
+
+        cards.forEach((card) => {
+            const cardSuit =
+                String(
+                    card.dataset.suit ||
+                    ""
+                ).toUpperCase();
+
+            const active =
+                cardSuit ===
+                state.suit;
+
+            card.classList.toggle(
+                "active",
+                active
+            );
+
+            card.setAttribute(
+                "aria-pressed",
+                String(active)
+            );
+
+            const status =
+                $(".suit-status", card);
+
+            if (status) {
+                status.textContent =
+                    active
+                        ? "SELECTED"
+                        : "AVAILABLE";
+            }
+        });
+
+        setText(
+            "#heroSuitName",
+            state.suit
+        );
+
+        setText(
+            "#hudSuit",
+            state.suit
+        );
+
+        setText(
+            "#selectedSuitName",
+            state.suit
+        );
+
+        saveState();
+
+        if (notify) {
+            showNotification(
+                `SUIT SYSTEM → ${state.suit}`
+            );
+        }
+
+        console.log(
+            `SPIDER-LINK SUIT → ${state.suit}`
+        );
+    }
+
+    function initializeSuits() {
+        const cards =
+            $$(".suit-card");
+
+        cards.forEach((card) => {
+            card.addEventListener(
+                "click",
+                () => {
+                    setSuit(
+                        card.dataset.suit
+                    );
+                }
+            );
+        });
+
+        setSuit(
+            state.suit,
+            false
+        );
+    }
+
+    /* ========================================================
+       HUD ENGINE
+       ======================================================== */
+
+    function setHUD(
+        hud,
+        notify = true
+    ) {
+        const normalized =
+            String(hud || "")
+                .trim()
+                .toUpperCase();
+
+        if (
+            !VALID_HUDS.includes(
+                normalized
+            )
+        ) {
+            return;
+        }
+
+        state.hud =
+            normalized;
+
+        const buttons =
+            $$(".hud-option");
+
+        buttons.forEach((button) => {
+            const buttonHUD =
+                String(
+                    button.dataset.hud ||
+                    ""
+                ).toUpperCase();
+
+            const active =
+                buttonHUD ===
+                state.hud;
+
+            button.classList.toggle(
+                "active",
+                active
+            );
+
+            button.setAttribute(
+                "aria-pressed",
+                String(active)
+            );
+        });
+
+        setText(
+            "#hudMode",
+            state.hud
+        );
+
+        saveState();
+
+        if (notify) {
+            showNotification(
+                `HUD MODE → ${state.hud}`
+            );
+        }
+    }
+
+    function initializeHUD() {
+        const buttons =
+            $$(".hud-option");
+
+        buttons.forEach((button) => {
+            button.addEventListener(
+                "click",
+                () => {
+                    setHUD(
+                        button.dataset.hud
+                    );
+                }
+            );
+        });
+
+        setHUD(
+            state.hud,
+            false
+        );
+    }
+
+    /* ========================================================
+       AI ENGINE
+       ======================================================== */
+
+    function updateAIUI() {
+        const configured =
+            Boolean(state.aiName);
+
+        const name =
+            state.aiName ||
+            "UNCONFIGURED";
+
+        setText(
+            "#heroAIName",
+            name
+        );
+
+        setText(
+            "#aiNameDisplay",
+            name
+        );
+
+        setText(
+            "#hudAI",
+            configured
+                ? "ONLINE"
+                : "OFFLINE"
+        );
+    }
+
+    function saveAIName() {
+        const input =
+            $("#aiNameInput");
+
+        if (!input) {
+            return;
+        }
+
+        const name =
+            input.value
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 20);
+
+        if (!name) {
+            showNotification(
+                "ENTER AN AI DESIGNATION"
+            );
+
+            input.focus();
+
+            return;
+        }
+
+        state.aiName =
+            name;
+
+        saveState();
+        updateAIUI();
+
+        input.value = "";
+
+        showNotification(
+            `AI LINK → ${name.toUpperCase()}`
+        );
+    }
+
+    function initializeAI() {
+        const saveButton =
+            $("#saveAI");
+
+        const input =
+            $("#aiNameInput");
+
+        const command =
+            $("#commandAI");
+
+        if (saveButton) {
+            saveButton.addEventListener(
+                "click",
+                saveAIName
+            );
+        }
+
+        if (input) {
+            input.addEventListener(
+                "keydown",
+                (event) => {
+                    if (
+                        event.key ===
+                        "Enter"
+                    ) {
+                        event.preventDefault();
+
+                        saveAIName();
+                    }
+                }
+            );
+        }
+
+        if (command) {
+            command.addEventListener(
+                "click",
+                () => {
+                    if (!state.aiName) {
+                        showNotification(
+                            "AI NOT CONFIGURED"
+                        );
+
+                        return;
+                    }
+
+                    showNotification(
+                        `${state.aiName.toUpperCase()} → SYSTEM NOMINAL`
+                    );
+                }
+            );
+        }
+
+        updateAIUI();
+    }
+
+    /* ========================================================
+       MASK INTERACTION
+       ======================================================== */
+
+    function initializeMaskInteraction() {
+        const mask =
+            $(".mask-core");
+
+        if (!mask) {
+            return;
+        }
+
+        if (
+            window.matchMedia(
+                "(pointer: coarse)"
+            ).matches
+        ) {
+            return;
+        }
+
+        mask.parentElement?.addEventListener(
+            "pointermove",
+            (event) => {
+                const rect =
+                    mask.parentElement.getBoundingClientRect();
+
+                const x =
+                    (
+                        event.clientX -
+                        rect.left
+                    ) / rect.width;
+
+                const rotation =
+                    (x - 0.5) * 14;
+
+                mask.style.setProperty(
+                    "--mask-rotation",
+                    `${rotation}deg`
+                );
+            }
+        );
+
+        mask.parentElement?.addEventListener(
+            "pointerleave",
+            () => {
+                mask.style.setProperty(
+                    "--mask-rotation",
+                    "0deg"
+                );
+            }
+        );
+    }
+
+    /* ========================================================
+       TELEMETRY
+       ======================================================== */
+
+    function initializeTelemetry() {
+        const batteryElements = $$(
+            "[data-telemetry='battery']"
+        );
+
+        const connectionElements = $$(
+            "[data-telemetry='connection']"
+        );
+
+        if (
+            !batteryElements.length &&
+            !connectionElements.length
+        ) {
+            return;
+        }
+
+        function update() {
+            state.battery =
+                Math.max(
+                    65,
+                    Math.min(
+                        99,
+                        state.battery +
+                            (
+                                Math.random() >
+                                0.7
+                                    ? -1
+                                    : 0
+                            )
+                    )
+                );
+
+            state.connection =
+                Math.floor(
+                    1 +
+                    Math.random() * 4
+                );
+
+            batteryElements.forEach(
+                (element) => {
+                    element.textContent =
+                        `${state.battery}%`;
+                }
+            );
+
+            connectionElements.forEach(
+                (element) => {
+                    element.textContent =
+                        `${state.connection}ms`;
+                }
+            );
+        }
+
+        update();
+
+        setInterval(
+            update,
+            3500
+        );
+    }
+
+    /* ========================================================
+       KEYBOARD CONTROL
+       ======================================================== */
+
+    function initializeKeyboard() {
+        document.addEventListener(
+            "keydown",
+            (event) => {
+                const active =
+                    document.activeElement;
+
+                const typing =
+                    active &&
+                    (
+                        active.tagName ===
+                            "INPUT" ||
+                        active.tagName ===
+                            "TEXTAREA" ||
+                        active.isContentEditable
+                    );
+
+                if (typing) {
+                    return;
+                }
+
+                switch (
+                    event.key.toLowerCase()
+                ) {
+                    case "1":
+                        setHUD(
+                            "MINIMAL"
+                        );
+                        break;
+
+                    case "2":
+                        setHUD(
+                            "TACTICAL"
+                        );
+                        break;
+
+                    case "3":
+                        setHUD(
+                            "STEALTH"
+                        );
+                        break;
+
+                    case "4":
+                        setHUD(
+                            "DEVELOPER"
+                        );
+                        break;
+
+                    case "q":
+                        setSuit(
+                            "CLASSIC"
+                        );
+                        break;
+
+                    case "w":
+                        setSuit(
+                            "SHADOW"
+                        );
+                        break;
+
+                    case "e":
+                        setSuit(
+                            "APEX"
+                        );
+                        break;
+
+                    case "r":
+                        setSuit(
+                            "CUSTOM"
+                        );
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        );
+    }
+
+    /* ========================================================
+       SYSTEM RESET
+       ======================================================== */
+
+    function resetSystem() {
+        try {
+            localStorage.removeItem(
+                STORAGE_KEY
+            );
+        } catch (error) {
+            console.warn(
+                "SPIDER-LINK reset error:",
+                error
+            );
+        }
+
+        state.suit =
+            "CLASSIC";
+
+        state.hud =
+            "MINIMAL";
+
+        state.aiName =
+            "";
+
+        setSuit(
+            "CLASSIC",
+            false
+        );
+
+        setHUD(
+            "MINIMAL",
+            false
+        );
+
+        updateAIUI();
+
+        showNotification(
+            "SYSTEM RESET COMPLETE"
+        );
+    }
+
+    /* ========================================================
+       PUBLIC DEBUG API
+       ======================================================== */
+
+    window.SPIDERLINK = {
+        version: "0.2.0",
+
+        state,
+
+        setSuit,
+        setHUD,
+
+        reset:
+            resetSystem,
+
+        notify:
+            showNotification
+    };
+
+    /* ========================================================
+       BOOT
+       ======================================================== */
+
+    async function runBoot() {
+        const splash =
+            $("#splashScreen");
+
+        if (!splash) {
+            return;
+        }
+
+        const status =
+            $("#splashStatus");
+
+        const percent =
+            $("#splashPercent");
+
+        const progress =
+            $("#splashProgressBar");
+
+        const sequence = [
+            [
+                "INITIALIZING CORE",
+                12
+            ],
+            [
+                "CHECKING INTERFACE",
+                27
+            ],
+            [
+                "LOADING INTERACTION ENGINE",
+                43
+            ],
+            [
+                "LINKING HUD",
+                58
+            ],
+            [
+                "SYNCING SUIT",
+                73
+            ],
+            [
+                "VERIFYING AI",
+                88
+            ],
+            [
+                "SYSTEM READY",
+                100
+            ]
+        ];
+
+        for (
+            const [message, value]
+            of sequence
+        ) {
+            if (status) {
+                status.textContent =
+                    message;
+            }
+
+            if (percent) {
+                percent.textContent =
+                    `${value}%`;
+            }
+
+            if (progress) {
+                progress.style.width =
+                    `${value}%`;
+            }
+
+            await new Promise(
+                (resolve) =>
+                    setTimeout(
+                        resolve,
+                        170
+                    )
+            );
+        }
+
+        await new Promise(
+            (resolve) =>
+                setTimeout(
+                    resolve,
+                    350
+                )
+        );
+
+        splash.classList.add(
+            "hidden"
+        );
+
+        splash.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+    }
+
+    /* ========================================================
+       INITIALIZATION
+       ======================================================== */
+
+    async function initialize() {
+        console.log(
+            "%c🕷️ SPIDER-LINK v0.2.0",
+            "font-size:22px;font-weight:900;"
+        );
+
+        loadState();
+
+        initializeScrollProgress();
+
+        initializeScrollReveal();
+
+        initializeStagger();
+
+        initializeNavigation();
+
+        initializeActiveNavigation();
+
+        initializeCursorGlow();
+
+        initializeCardTilt();
+
+        initializeMagneticButtons();
+
+        initializeRipples();
+
+        initializeSuits();
+
+        initializeHUD();
+
+        initializeAI();
+
+        initializeMaskInteraction();
+
+        initializeTelemetry();
+
+        initializeKeyboard();
+
+        await runBoot();
+
+        showNotification(
+            "SPIDER-LINK ONLINE"
+        );
+
+        console.log(
+            "SYSTEM → ONLINE"
+        );
+
+        console.log(
+            `SUIT → ${state.suit}`
+        );
+
+        console.log(
+            `HUD → ${state.hud}`
+        );
+
+        console.log(
+            `AI → ${
+                state.aiName ||
+                "UNCONFIGURED"
+            }`
+        );
+    }
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize,
+            { once: true }
+        );
+    } else {
+        initialize();
+    }
 
 })();
