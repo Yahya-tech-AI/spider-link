@@ -1,8 +1,8 @@
-# 🕷️ SPIDER-LINK
+# 🕷️ SPIDEY-LINK
 
 > **A next-generation wearable interface for the future of smart suits.**
 
-SPIDER-LINK is an original futuristic wearable technology concept combining a smart mask, in-lens HUD, programmable eye systems, onboard AI, suit sensors, phone synchronization, customizable interfaces, and safe web-effect technology into one connected ecosystem.
+SPIDEY-LINK is an original futuristic wearable technology concept combining a smart mask, in-lens HUD, programmable eye systems, onboard AI, suit sensors, phone synchronization, customizable interfaces, and safe web-effect technology into one connected ecosystem.
 
 Built as an experimental project exploring what a real-world superhero-inspired wearable computer could look like.
 
@@ -14,7 +14,7 @@ What if a suit wasn't just clothing?
 
 What if it was a **computer you could wear?**
 
-SPIDER-LINK is designed around that idea.
+SPIDEY-LINK is designed around that idea.
 
 The system connects:
 
@@ -34,7 +34,7 @@ into one synchronized platform.
 ## 🧩 Core System
 
 ```text
-                         SPIDER-LINK
+                         SPIDEY-LINK
                               │
              ┌────────────────┼────────────────┐
              │                │                │
@@ -49,13 +49,13 @@ into one synchronized platform.
            🥽 MASK      🦾 SUIT     🕸️ EFFECTS
               │           │           │
            👁️ HUD      📡 SENSORS    💡 FX
-````
+```
 
 ---
 
 # 🥽 Smart Mask
 
-The SPIDER-LINK mask acts as the primary wearable interface.
+The SPIDEY-LINK mask acts as the primary wearable interface.
 
 ### Features
 
@@ -77,13 +77,13 @@ The mask can receive commands from the smartphone while maintaining local functi
 
 # 🕶️ HUD System
 
-SPIDER-LINK features a customizable heads-up display concept.
+SPIDEY-LINK features a customizable heads-up display concept.
 
 The HUD can display information such as:
 
 ```text
 ┌─────────────────────────────────────┐
-│ SPIDER-LINK                         │
+│ SPIDEY-LINK                         │
 │                                     │
 │ SUIT       ONLINE                   │
 │ MASK       ONLINE                   │
@@ -116,7 +116,7 @@ Users can customize:
 
 # 🧠 Personal AI
 
-SPIDER-LINK includes a personal AI assistant concept.
+SPIDEY-LINK includes a personal AI assistant concept.
 
 The AI is **not permanently named**.
 
@@ -148,7 +148,7 @@ The AI can conceptually control supported suit functions, provide system informa
 
 ---
 
-# 📱 SPIDER-LINK PHONE
+# 📱 SPIDEY-LINK PHONE
 
 The smartphone acts as the primary companion device.
 
@@ -177,7 +177,7 @@ PHONE
   │
   │ Bluetooth / Wi-Fi
   ▼
-SPIDER-LINK
+SPIDEY-LINK
   │
   ├── MASK
   ├── HUD
@@ -196,7 +196,7 @@ PHONE
    ↓
 Change Theme → "SYMBIOTE"
    ↓
-SPIDER-LINK
+SPIDEY-LINK
    ↓
 HUD changes
    ↓
@@ -211,7 +211,7 @@ Audio profile changes
 
 # 🦾 Suit System
 
-SPIDER-LINK is designed as an ecosystem supporting multiple suit configurations.
+SPIDEY-LINK is designed as an ecosystem supporting multiple suit configurations.
 
 ## 🔴 CLASSIC
 
@@ -295,7 +295,7 @@ Interface
 
 # 🕸️ Web-Effect System
 
-SPIDER-LINK explores the idea of superhero-style web technology through **safe cosplay and prototype effects**.
+SPIDEY-LINK explores the idea of superhero-style web technology through **safe cosplay and prototype effects**.
 
 Possible concepts include:
 
@@ -348,7 +348,7 @@ Animations can respond to:
 
 # 🎮 Suit Modes
 
-SPIDER-LINK can have different operating modes.
+SPIDEY-LINK can have different operating modes.
 
 ### 🟢 NORMAL
 
@@ -404,7 +404,7 @@ SYSTEM     STABLE
 
 # 🎨 Interface Design
 
-SPIDER-LINK follows a futuristic technology aesthetic.
+SPIDEY-LINK follows a futuristic technology aesthetic.
 
 ### Design principles
 
@@ -422,7 +422,7 @@ SPIDER-LINK follows a futuristic technology aesthetic.
 
 # 🛠️ Technology
 
-The current website prototype is designed around web technologies.
+The current website prototype is built with:
 
 ```text
 HTML
@@ -450,7 +450,7 @@ Mobile Applications
 # 🧱 Project Architecture
 
 ```text
-SPIDER-LINK
+SPIDEY-LINK
 │
 ├── index.html
 ├── style.css
@@ -474,18 +474,22 @@ SPIDER-LINK
 
 # 🧪 Current Development Goals
 
-### Phase 01 — Website
+## Phase 01 — Website
 
 * [x] Project concept
-* [ ] Landing page
-* [ ] Smart Mask showcase
-* [ ] HUD simulator
-* [ ] Suit selector
-* [ ] AI name customization
-* [ ] Phone synchronization simulator
-* [ ] Interactive dashboard
+* [x] Landing page
+* [x] Smart Mask showcase
+* [x] HUD simulator
+* [x] Suit selector
+* [x] AI name customization
+* [x] Phone synchronization simulator
+* [x] Interactive dashboard
+* [x] Interactive system controls
+* [x] Persistent local settings
+* [x] Interactive HUD modes
+* [x] Interactive suit modes
 
-### Phase 02 — Software
+## Phase 02 — Software
 
 * [ ] Companion app
 * [ ] HUD editor
@@ -494,7 +498,7 @@ SPIDER-LINK
 * [ ] AI configuration
 * [ ] Device communication layer
 
-### Phase 03 — Hardware Prototype
+## Phase 03 — Hardware Prototype
 
 * [ ] Prototype mask
 * [ ] Programmable eye system
@@ -504,7 +508,7 @@ SPIDER-LINK
 * [ ] Phone connectivity
 * [ ] Safe wearable effects
 
-### Phase 04 — Advanced Prototype
+## Phase 04 — Advanced Prototype
 
 * [ ] Real-time HUD
 * [ ] Computer vision experiments
@@ -516,7 +520,7 @@ SPIDER-LINK
 
 # 🔐 Safety
 
-SPIDER-LINK is an experimental wearable technology and cosplay concept.
+SPIDEY-LINK is an experimental wearable technology and cosplay concept.
 
 Safety is a core design requirement.
 
@@ -537,13 +541,13 @@ Any physical prototype should prioritize:
 
 # ⚠️ Disclaimer
 
-SPIDER-LINK is an **original fictional/prototype technology concept**.
+SPIDEY-LINK is an **original fictional/prototype technology concept**.
 
 It is not an official Marvel product and is not affiliated with or endorsed by Marvel, Sony, Disney, or any other Spider-Man rights holder.
 
 Spider-Man-inspired terminology is used only to describe the concept and design direction.
 
-All original SPIDER-LINK designs, interfaces, systems, and branding belong to this project.
+All original SPIDEY-LINK designs, interfaces, systems, and branding belong to this project.
 
 ---
 
@@ -551,7 +555,7 @@ All original SPIDER-LINK designs, interfaces, systems, and branding belong to th
 
 **Status:** 🧪 Experimental Prototype
 
-**Version:** `0.1.0`
+**Version:** `0.2.0`
 
 **Development:** Active
 
@@ -563,7 +567,7 @@ All original SPIDER-LINK designs, interfaces, systems, and branding belong to th
 
 # 🌐 Future Vision
 
-SPIDER-LINK is not just a website.
+SPIDEY-LINK is not just a website.
 
 The long-term goal is to explore a complete wearable computing ecosystem:
 
@@ -574,7 +578,7 @@ The long-term goal is to explore a complete wearable computing ecosystem:
              📱 SMARTPHONE
                     │
                     ▼
-              🕷️ SPIDER-LINK
+              🕷️ SPIDEY-LINK
                     │
         ┌───────────┼───────────┐
         ▼           ▼           ▼
@@ -591,11 +595,11 @@ The idea is simple:
 
 ---
 
-# ⭐ Why SPIDER-LINK?
+# ⭐ Why SPIDEY-LINK?
 
 Most wearable technology focuses on notifications, fitness, or convenience.
 
-SPIDER-LINK explores something different:
+SPIDEY-LINK explores something different:
 
 **What if a wearable could become a complete personal interface?**
 
@@ -609,10 +613,9 @@ A system where:
 
 ---
 
-# 🕷️ SPIDER-LINK
+# 🕷️ SPIDEY-LINK
 
 ### **Wear the interface.**
-
 **Build the future.**
 
 **Become the system.**
