@@ -12,6 +12,10 @@
 (() => {
     "use strict";
 
+    /* =====================================================
+       CONFIG
+    ===================================================== */
+
     const STORAGE_KEY = "spiderlink_v2";
 
     const VALID_SUITS = [
@@ -28,19 +32,22 @@
         "DEVELOPER"
     ];
 
+
+    /* =====================================================
+       STATE
+    ===================================================== */
+
     const state = {
         suit: "CLASSIC",
         hud: "MINIMAL",
         aiName: "",
-        battery: 87,
-        connection: 2
+        aiActive: false
     };
 
-    let notificationTimer = null;
 
-    /* ========================================================
+    /* =====================================================
        HELPERS
-       ======================================================== */
+    ===================================================== */
 
     const $ = (selector, root = document) =>
         root.querySelector(selector);
@@ -48,17 +55,25 @@
     const $$ = (selector, root = document) =>
         Array.from(root.querySelectorAll(selector));
 
-    function setText(selector, value) {
-        const element = $(selector);
 
+    function safeText(element, value) {
         if (element) {
             element.textContent = value;
         }
     }
 
-    /* ========================================================
+
+    function formatName(value) {
+        return String(value)
+            .toLowerCase()
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+
+    /* =====================================================
        STORAGE
-       ======================================================== */
+    ===================================================== */
 
     function loadState() {
         try {
@@ -68,41 +83,33 @@
 
             if (
                 typeof saved.suit === "string" &&
-                VALID_SUITS.includes(
-                    saved.suit.toUpperCase()
-                )
+                VALID_SUITS.includes(saved.suit.toUpperCase())
             ) {
-                state.suit =
-                    saved.suit.toUpperCase();
+                state.suit = saved.suit.toUpperCase();
             }
 
             if (
                 typeof saved.hud === "string" &&
-                VALID_HUDS.includes(
-                    saved.hud.toUpperCase()
-                )
+                VALID_HUDS.includes(saved.hud.toUpperCase())
             ) {
-                state.hud =
-                    saved.hud.toUpperCase();
+                state.hud = saved.hud.toUpperCase();
             }
 
-            if (
-                typeof saved.aiName === "string"
-            ) {
-                state.aiName =
-                    saved.aiName
-                        .replace(/\s+/g, " ")
-                        .trim()
-                        .slice(0, 20);
+            if (typeof saved.aiName === "string") {
+                state.aiName = saved.aiName
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .slice(0, 20);
             }
 
         } catch (error) {
             console.warn(
-                "SPIDER-LINK storage error:",
+                "SPIDER-LINK storage reset.",
                 error
             );
         }
     }
+
 
     function saveState() {
         try {
@@ -116,136 +123,187 @@
             );
         } catch (error) {
             console.warn(
-                "SPIDER-LINK save error:",
+                "SPIDER-LINK could not save state.",
                 error
             );
         }
     }
 
-    /* ========================================================
-       NOTIFICATIONS
-       ======================================================== */
+
+    /* =====================================================
+       NOTIFICATION ENGINE
+    ===================================================== */
+
+    let notificationTimer = null;
+
 
     function showNotification(message) {
-        const notification =
-            $("#notification");
 
-        const text =
-            $("#notificationText");
+        const notification = $("#notification");
+        const text = $("#notificationText");
 
         if (!notification || !text) {
-            console.log(
-                `SPIDER-LINK → ${message}`
-            );
             return;
         }
 
         text.textContent = message;
 
-        notification.classList.remove(
-            "show"
-        );
+        notification.classList.add("show");
 
-        void notification.offsetWidth;
+        clearTimeout(notificationTimer);
 
-        notification.classList.add(
-            "show"
-        );
-
-        clearTimeout(
-            notificationTimer
-        );
-
-        notificationTimer =
-            setTimeout(() => {
-                notification.classList.remove(
-                    "show"
-                );
-            }, 2400);
+        notificationTimer = setTimeout(() => {
+            notification.classList.remove("show");
+        }, 2400);
     }
 
-    /* ========================================================
-       SCROLL PROGRESS
-       ======================================================== */
 
-    function initializeScrollProgress() {
-        let ticking = false;
+    /* =====================================================
+       SPLASH BOOT
+    ===================================================== */
 
-        function update() {
-            const scrollTop =
-                window.scrollY;
+    function runSplash() {
 
-            const documentHeight =
-                document.documentElement
-                    .scrollHeight -
-                window.innerHeight;
+        return new Promise(resolve => {
 
-            const progress =
-                documentHeight > 0
-                    ? (
-                        scrollTop /
-                        documentHeight
-                    ) * 100
-                    : 0;
+            const screen = $("#splashScreen");
+            const status = $("#splashStatus");
+            const progress = $("#splashProgressBar");
+            const percent = $("#splashPercent");
 
-            const bar =
-                $(".scroll-progress");
-
-            if (bar) {
-                bar.style.width =
-                    `${progress}%`;
+            if (!screen) {
+                resolve();
+                return;
             }
 
-            const navbar =
-                $(".navbar");
+            const stages = [
+                "BOOTING CORE",
+                "CHECKING INTERFACE",
+                "LINKING SYSTEMS",
+                "LOADING HUD",
+                "INITIALIZING AI",
+                "SYSTEM READY"
+            ];
 
-            if (navbar) {
-                navbar.classList.toggle(
-                    "scrolled",
-                    scrollTop > 25
+            let value = 0;
+
+            const interval = setInterval(() => {
+
+                value += Math.floor(
+                    Math.random() * 8
+                ) + 4;
+
+                if (value >= 100) {
+                    value = 100;
+                }
+
+                if (progress) {
+                    progress.style.width = `${value}%`;
+                }
+
+                if (percent) {
+                    percent.textContent = `${value}%`;
+                }
+
+                const index = Math.min(
+                    stages.length - 1,
+                    Math.floor(
+                        (value / 100) *
+                        stages.length
+                    )
                 );
-            }
 
-            ticking = false;
+                if (status) {
+                    status.textContent = stages[index];
+                }
+
+                if (value >= 100) {
+
+                    clearInterval(interval);
+
+                    setTimeout(() => {
+
+                        screen.classList.add("hidden");
+
+                        resolve();
+
+                    }, 450);
+                }
+
+            }, 110);
+        });
+    }
+
+
+    /* =====================================================
+       SCROLL PROGRESS
+    ===================================================== */
+
+    function updateScrollProgress() {
+
+        const documentHeight =
+            document.documentElement.scrollHeight -
+            window.innerHeight;
+
+        if (documentHeight <= 0) {
+            document.documentElement.style
+                .setProperty(
+                    "--scroll-progress",
+                    "0%"
+                );
+
+            return;
         }
 
-        window.addEventListener(
-            "scroll",
-            () => {
-                if (!ticking) {
-                    window.requestAnimationFrame(
-                        update
-                    );
+        const progress =
+            (window.scrollY / documentHeight) * 100;
 
-                    ticking = true;
-                }
-            },
-            { passive: true }
-        );
-
-        update();
+        document.documentElement.style
+            .setProperty(
+                "--scroll-progress",
+                `${Math.min(100, Math.max(0, progress))}%`
+            );
     }
 
-    /* ========================================================
-       SCROLL REVEAL
-       ======================================================== */
 
-    function initializeScrollReveal() {
-        const elements = $$(
-            ".reveal, .reveal-left, .reveal-right"
+    /* =====================================================
+       NAVBAR SCROLL STATE
+    ===================================================== */
+
+    function updateNavbar() {
+
+        const navbar = $(".navbar");
+
+        if (!navbar) {
+            return;
+        }
+
+        navbar.classList.toggle(
+            "scrolled",
+            window.scrollY > 40
         );
+    }
+
+
+    /* =====================================================
+       SCROLL REVEAL
+    ===================================================== */
+
+    function initializeReveal() {
+
+        const elements = $$(".reveal, .reveal-left, .reveal-right");
 
         if (!elements.length) {
             return;
         }
 
         if (
-            !("IntersectionObserver" in window)
+            window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+            ).matches
         ) {
-            elements.forEach((element) => {
-                element.classList.add(
-                    "visible"
-                );
+            elements.forEach(element => {
+                element.classList.add("visible");
             });
 
             return;
@@ -253,504 +311,401 @@
 
         const observer =
             new IntersectionObserver(
-                (entries, obs) => {
-                    entries.forEach(
-                        (entry) => {
-                            if (
-                                !entry.isIntersecting
-                            ) {
-                                return;
-                            }
+                entries => {
 
-                            entry.target.classList.add(
-                                "visible"
-                            );
+                    entries.forEach(entry => {
 
-                            obs.unobserve(
+                        if (
+                            entry.isIntersecting
+                        ) {
+
+                            entry.target
+                                .classList
+                                .add("visible");
+
+                            observer.unobserve(
                                 entry.target
                             );
                         }
-                    );
+                    });
+
                 },
                 {
                     threshold: 0.12,
-                    rootMargin:
-                        "0px 0px -50px 0px"
+                    rootMargin: "0px 0px -50px 0px"
                 }
             );
 
-        elements.forEach(
-            (element) => {
-                observer.observe(
-                    element
-                );
-            }
-        );
-    }
-
-    /* ========================================================
-       STAGGERED CHILD REVEAL
-       ======================================================== */
-
-    function initializeStagger() {
-        const groups = $$(
-            ".system-grid, .suit-grid, .architecture-grid, .safety-grid"
-        );
-
-        groups.forEach((group) => {
-            const children =
-                Array.from(
-                    group.children
-                );
-
-            children.forEach(
-                (child, index) => {
-                    child.classList.add(
-                        "stagger-item"
-                    );
-
-                    child.style.transitionDelay =
-                        `${index * 80}ms`;
-                }
-            );
-
-            if (
-                !("IntersectionObserver" in window)
-            ) {
-                children.forEach(
-                    (child) => {
-                        child.classList.add(
-                            "visible"
-                        );
-                    }
-                );
-
-                return;
-            }
-
-            const observer =
-                new IntersectionObserver(
-                    (entries, obs) => {
-                        entries.forEach(
-                            (entry) => {
-                                if (
-                                    !entry.isIntersecting
-                                ) {
-                                    return;
-                                }
-
-                                children.forEach(
-                                    (child) => {
-                                        child.classList.add(
-                                            "visible"
-                                        );
-                                    }
-                                );
-
-                                obs.unobserve(
-                                    group
-                                );
-                            }
-                        );
-                    },
-                    {
-                        threshold: 0.08
-                    }
-                );
-
-            observer.observe(group);
+        elements.forEach(element => {
+            observer.observe(element);
         });
     }
 
-    /* ========================================================
-       ACTIVE NAVIGATION
-       ======================================================== */
 
-    function initializeActiveNavigation() {
-        const links = $$(
-            '.nav-links a[href^="#"]'
-        );
+    /* =====================================================
+       ACTIVE NAVIGATION
+    ===================================================== */
+
+    function initializeNavigation() {
+
+        const links = $$(".nav-links a");
 
         if (!links.length) {
             return;
         }
 
-        const sections = links
-            .map((link) => {
-                const id =
-                    link.getAttribute(
-                        "href"
-                    );
+        const sections = [];
 
-                if (
-                    !id ||
-                    id === "#"
-                ) {
-                    return null;
+        links.forEach(link => {
+
+            const href =
+                link.getAttribute("href");
+
+            if (
+                href &&
+                href.startsWith("#")
+            ) {
+
+                const section =
+                    document.querySelector(href);
+
+                if (section) {
+                    sections.push({
+                        section,
+                        link
+                    });
                 }
-
-                return $(id);
-            })
-            .filter(Boolean);
-
-        if (
-            !("IntersectionObserver" in window)
-        ) {
-            return;
-        }
-
-        const observer =
-            new IntersectionObserver(
-                (entries) => {
-                    entries.forEach(
-                        (entry) => {
-                            if (
-                                !entry.isIntersecting
-                            ) {
-                                return;
-                            }
-
-                            links.forEach(
-                                (link) => {
-                                    link.classList.remove(
-                                        "active"
-                                    );
-                                }
-                            );
-
-                            const active =
-                                links.find(
-                                    (link) =>
-                                        link.getAttribute(
-                                            "href"
-                                        ) ===
-                                        `#${entry.target.id}`
-                                );
-
-                            if (active) {
-                                active.classList.add(
-                                    "active"
-                                );
-                            }
-                        }
-                    );
-                },
-                {
-                    rootMargin:
-                        "-30% 0px -60% 0px",
-                    threshold: 0
-                }
-            );
-
-        sections.forEach(
-            (section) => {
-                observer.observe(
-                    section
-                );
             }
-        );
-    }
 
-    /* ========================================================
-       SMOOTH NAVIGATION
-       ======================================================== */
-
-    function initializeNavigation() {
-        const links = $$(
-            'a[href^="#"]'
-        );
-
-        links.forEach((link) => {
             link.addEventListener(
                 "click",
-                (event) => {
-                    const targetID =
-                        link.getAttribute(
-                            "href"
-                        );
+                () => {
 
-                    if (
-                        !targetID ||
-                        targetID === "#"
-                    ) {
-                        return;
-                    }
+                    links.forEach(item =>
+                        item.classList.remove(
+                            "active"
+                        )
+                    );
 
-                    const target =
-                        $(targetID);
-
-                    if (!target) {
-                        return;
-                    }
-
-                    event.preventDefault();
-
-                    target.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
+                    link.classList.add(
+                        "active"
+                    );
                 }
             );
         });
-    }
 
-    /* ========================================================
-       CURSOR GLOW
-       ======================================================== */
 
-    function initializeCursorGlow() {
-        if (
-            window.matchMedia(
-                "(pointer: coarse)"
-            ).matches
-        ) {
+        if (!sections.length) {
             return;
         }
 
-        let glow =
-            $(".cursor-glow");
 
-        if (!glow) {
-            glow =
-                document.createElement(
-                    "div"
-                );
+        const observer =
+            new IntersectionObserver(
+                entries => {
 
-            glow.className =
-                "cursor-glow";
+                    entries.forEach(entry => {
 
-            document.body.appendChild(
-                glow
+                        if (
+                            entry.isIntersecting
+                        ) {
+
+                            links.forEach(link =>
+                                link.classList
+                                    .remove("active")
+                            );
+
+                            const match =
+                                sections.find(
+                                    item =>
+                                        item.section ===
+                                        entry.target
+                                );
+
+                            if (match) {
+                                match.link
+                                    .classList
+                                    .add("active");
+                            }
+                        }
+
+                    });
+
+                },
+                {
+                    rootMargin:
+                        "-35% 0px -55% 0px"
+                }
             );
-        }
 
-        let mouseX = -300;
-        let mouseY = -300;
 
-        let currentX = mouseX;
-        let currentY = mouseY;
+        sections.forEach(item => {
+            observer.observe(item.section);
+        });
+    }
 
-        function animate() {
-            currentX +=
-                (mouseX - currentX) *
-                0.12;
 
-            currentY +=
-                (mouseY - currentY) *
-                0.12;
+    /* =====================================================
+       MOUSE TRACKING
+    ===================================================== */
 
-            glow.style.left =
-                `${currentX}px`;
+    function initializeMouseTracking() {
 
-            glow.style.top =
-                `${currentY}px`;
+        const isTouch =
+            window.matchMedia(
+                "(hover: none)"
+            ).matches;
 
-            requestAnimationFrame(
-                animate
-            );
+        if (isTouch) {
+            return;
         }
 
         window.addEventListener(
             "pointermove",
-            (event) => {
-                mouseX = event.clientX;
-                mouseY = event.clientY;
+            event => {
 
-                glow.style.opacity = "1";
+                const x =
+                    (event.clientX /
+                        window.innerWidth) *
+                    100;
+
+                const y =
+                    (event.clientY /
+                        window.innerHeight) *
+                    100;
+
+                document.documentElement
+                    .style
+                    .setProperty(
+                        "--mouse-x",
+                        `${x}%`
+                    );
+
+                document.documentElement
+                    .style
+                    .setProperty(
+                        "--mouse-y",
+                        `${y}%`
+                    );
             },
-            { passive: true }
-        );
-
-        document.addEventListener(
-            "mouseleave",
-            () => {
-                glow.style.opacity = "0";
+            {
+                passive: true
             }
         );
-
-        animate();
     }
 
-    /* ========================================================
-       CARD TILT
-       ======================================================== */
 
-    function initializeCardTilt() {
-        if (
-            window.matchMedia(
-                "(pointer: coarse)"
-            ).matches
-        ) {
+    /* =====================================================
+       CARD POINTER GLOW
+    ===================================================== */
+
+    function initializeCardGlow() {
+
+        const cards = $$(".system-card");
+
+        if (!cards.length) {
             return;
         }
 
-        const cards = $$(
-            ".system-card, .architecture-card, .safety-card, .suit-card"
-        );
+        cards.forEach(card => {
 
-        cards.forEach((card) => {
             card.addEventListener(
                 "pointermove",
-                (event) => {
+                event => {
+
                     const rect =
                         card.getBoundingClientRect();
 
                     const x =
-                        event.clientX -
-                        rect.left;
+                        ((event.clientX -
+                            rect.left) /
+                            rect.width) *
+                        100;
 
                     const y =
-                        event.clientY -
-                        rect.top;
-
-                    const centerX =
-                        rect.width / 2;
-
-                    const centerY =
-                        rect.height / 2;
-
-                    const rotateX =
-                        ((y - centerY) /
-                            centerY) *
-                        -3;
-
-                    const rotateY =
-                        ((x - centerX) /
-                            centerX) *
-                        3;
+                        ((event.clientY -
+                            rect.top) /
+                            rect.height) *
+                        100;
 
                     card.style.setProperty(
-                        "--mouse-x",
-                        `${x}px`
+                        "--card-x",
+                        `${x}%`
                     );
 
                     card.style.setProperty(
-                        "--mouse-y",
-                        `${y}px`
+                        "--card-y",
+                        `${y}%`
                     );
-
-                    card.style.transform =
-                        `perspective(800px)
-                         rotateX(${rotateX}deg)
-                         rotateY(${rotateY}deg)
-                         translateY(-5px)`;
-                }
-            );
-
-            card.addEventListener(
-                "pointerleave",
-                () => {
-                    card.style.transform =
-                        "";
                 }
             );
         });
     }
 
-    /* ========================================================
+
+    /* =====================================================
        MAGNETIC BUTTONS
-       ======================================================== */
+    ===================================================== */
 
     function initializeMagneticButtons() {
-        if (
-            window.matchMedia(
-                "(pointer: coarse)"
-            ).matches
-        ) {
+
+        const buttons =
+            $$(".button-primary, .button-secondary");
+
+        if (!buttons.length) {
             return;
         }
 
-        const buttons = $$(
-            ".primary-button, .secondary-button, .hud-option"
-        );
+        const isTouch =
+            window.matchMedia(
+                "(hover: none)"
+            ).matches;
 
-        buttons.forEach((button) => {
+        if (isTouch) {
+            return;
+        }
+
+        buttons.forEach(button => {
+
             button.addEventListener(
                 "pointermove",
-                (event) => {
+                event => {
+
                     const rect =
                         button.getBoundingClientRect();
 
                     const x =
                         event.clientX -
-                        rect.left -
-                        rect.width / 2;
+                        (rect.left +
+                            rect.width / 2);
 
                     const y =
                         event.clientY -
-                        rect.top -
-                        rect.height / 2;
+                        (rect.top +
+                            rect.height / 2);
 
                     button.style.transform =
-                        `translate(
-                            ${x * 0.12}px,
-                            ${y * 0.12}px
-                        )`;
+                        `translate(${x * 0.08}px, ${y * 0.08}px)`;
                 }
             );
 
             button.addEventListener(
                 "pointerleave",
                 () => {
-                    button.style.transform =
-                        "";
+
+                    button.style.transform = "";
                 }
             );
         });
     }
 
-    /* ========================================================
-       RIPPLE EFFECT
-       ======================================================== */
 
-    function initializeRipples() {
-        const elements = $$(
-            ".primary-button, .secondary-button, .hud-option"
+    /* =====================================================
+       HERO PARALLAX
+    ===================================================== */
+
+    function initializeHeroParallax() {
+
+        const visual = $(".hero-visual");
+
+        if (!visual) {
+            return;
+        }
+
+        const isTouch =
+            window.matchMedia(
+                "(hover: none)"
+            ).matches;
+
+        if (isTouch) {
+            return;
+        }
+
+        visual.addEventListener(
+            "pointermove",
+            event => {
+
+                const rect =
+                    visual.getBoundingClientRect();
+
+                const x =
+                    (event.clientX -
+                        rect.left) /
+                    rect.width -
+                    0.5;
+
+                const y =
+                    (event.clientY -
+                        rect.top) /
+                    rect.height -
+                    0.5;
+
+                const core =
+                    $(".hero-core", visual);
+
+                const cardTop =
+                    $(".card-top", visual);
+
+                const cardBottom =
+                    $(".card-bottom", visual);
+
+                if (core) {
+                    core.style.transform =
+                        `translate(${x * 12}px, ${y * 12}px)`;
+                }
+
+                if (cardTop) {
+                    cardTop.style.transform =
+                        `translate(${x * -10}px, ${y * -10}px)`;
+                }
+
+                if (cardBottom) {
+                    cardBottom.style.transform =
+                        `translate(${x * 8}px, ${y * 8}px)`;
+                }
+            }
         );
 
-        elements.forEach((element) => {
-            element.addEventListener(
-                "click",
-                (event) => {
-                    const rect =
-                        element.getBoundingClientRect();
+        visual.addEventListener(
+            "pointerleave",
+            () => {
 
-                    const ripple =
-                        document.createElement(
-                            "span"
-                        );
+                const core =
+                    $(".hero-core", visual);
 
-                    ripple.className =
-                        "ripple";
+                const cardTop =
+                    $(".card-top", visual);
 
-                    ripple.style.left =
-                        `${event.clientX - rect.left}px`;
+                const cardBottom =
+                    $(".card-bottom", visual);
 
-                    ripple.style.top =
-                        `${event.clientY - rect.top}px`;
-
-                    element.appendChild(
-                        ripple
-                    );
-
-                    setTimeout(() => {
-                        ripple.remove();
-                    }, 700);
+                if (core) {
+                    core.style.transform = "";
                 }
-            );
-        });
+
+                if (cardTop) {
+                    cardTop.style.transform = "";
+                }
+
+                if (cardBottom) {
+                    cardBottom.style.transform = "";
+                }
+            }
+        );
     }
 
-    /* ========================================================
-       SUIT ENGINE
-       ======================================================== */
+
+    /* =====================================================
+       SUIT SYSTEM
+    ===================================================== */
 
     function setSuit(
         suit,
         notify = true
     ) {
+
         const normalized =
-            String(suit || "")
+            String(suit)
                 .trim()
                 .toUpperCase();
 
@@ -762,31 +717,22 @@
             return;
         }
 
-        state.suit =
-            normalized;
+        state.suit = normalized;
 
-        const cards =
-            $$(".suit-card");
 
-        cards.forEach((card) => {
+        $$(".suit-card").forEach(card => {
+
             const cardSuit =
                 String(
-                    card.dataset.suit ||
-                    ""
+                    card.dataset.suit || ""
                 ).toUpperCase();
 
             const active =
-                cardSuit ===
-                state.suit;
+                cardSuit === state.suit;
 
             card.classList.toggle(
                 "active",
                 active
-            );
-
-            card.setAttribute(
-                "aria-pressed",
-                String(active)
             );
 
             const status =
@@ -800,42 +746,45 @@
             }
         });
 
-        setText(
-            "#heroSuitName",
+
+        safeText(
+            $("#heroSuitName"),
             state.suit
         );
 
-        setText(
-            "#hudSuit",
+        safeText(
+            $("#hudSuit"),
             state.suit
         );
 
-        setText(
-            "#selectedSuitName",
+        safeText(
+            $("#selectedSuitName"),
             state.suit
         );
+
 
         saveState();
 
+
         if (notify) {
             showNotification(
-                `SUIT SYSTEM → ${state.suit}`
+                `SPIDER-LINK SUIT → ${state.suit}`
             );
         }
-
-        console.log(
-            `SPIDER-LINK SUIT → ${state.suit}`
-        );
     }
 
+
     function initializeSuits() {
+
         const cards =
             $$(".suit-card");
 
-        cards.forEach((card) => {
+        cards.forEach(card => {
+
             card.addEventListener(
                 "click",
                 () => {
+
                     setSuit(
                         card.dataset.suit
                     );
@@ -843,22 +792,25 @@
             );
         });
 
+
         setSuit(
             state.suit,
             false
         );
     }
 
-    /* ========================================================
-       HUD ENGINE
-       ======================================================== */
+
+    /* =====================================================
+       HUD SYSTEM
+    ===================================================== */
 
     function setHUD(
         hud,
         notify = true
     ) {
+
         const normalized =
-            String(hud || "")
+            String(hud)
                 .trim()
                 .toUpperCase();
 
@@ -870,62 +822,69 @@
             return;
         }
 
-        state.hud =
-            normalized;
+        state.hud = normalized;
 
-        const buttons =
-            $$(".hud-option");
 
-        buttons.forEach((button) => {
-            const buttonHUD =
-                String(
-                    button.dataset.hud ||
-                    ""
-                ).toUpperCase();
+        $$(".hud-option").forEach(
+            button => {
 
-            const active =
-                buttonHUD ===
-                state.hud;
+                const buttonHUD =
+                    String(
+                        button.dataset.hud ||
+                        ""
+                    ).toUpperCase();
 
-            button.classList.toggle(
-                "active",
-                active
-            );
-
-            button.setAttribute(
-                "aria-pressed",
-                String(active)
-            );
-        });
-
-        setText(
-            "#hudMode",
-            state.hud
+                button.classList.toggle(
+                    "active",
+                    buttonHUD === normalized
+                );
+            }
         );
+
+
+        safeText(
+            $("#hudMode"),
+            normalized
+        );
+
+
+        const consoleDisplay =
+            $(".console-display");
+
+        if (consoleDisplay) {
+            consoleDisplay.dataset.mode =
+                normalized;
+        }
+
 
         saveState();
 
+
         if (notify) {
             showNotification(
-                `HUD MODE → ${state.hud}`
+                `HUD MODE → ${normalized}`
             );
         }
     }
 
-    function initializeHUD() {
-        const buttons =
-            $$(".hud-option");
 
-        buttons.forEach((button) => {
-            button.addEventListener(
-                "click",
-                () => {
-                    setHUD(
-                        button.dataset.hud
-                    );
-                }
-            );
-        });
+    function initializeHUD() {
+
+        $$(".hud-option").forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        setHUD(
+                            button.dataset.hud
+                        );
+                    }
+                );
+            }
+        );
+
 
         setHUD(
             state.hud,
@@ -933,37 +892,53 @@
         );
     }
 
-    /* ========================================================
-       AI ENGINE
-       ======================================================== */
+
+    /* =====================================================
+       AI SYSTEM
+    ===================================================== */
 
     function updateAIUI() {
-        const configured =
-            Boolean(state.aiName);
 
         const name =
             state.aiName ||
             "UNCONFIGURED";
 
-        setText(
-            "#heroAIName",
+
+        safeText(
+            $("#heroAIName"),
             name
         );
 
-        setText(
-            "#aiNameDisplay",
+        safeText(
+            $("#aiNameDisplay"),
             name
         );
 
-        setText(
-            "#hudAI",
-            configured
+
+        safeText(
+            $("#hudAI"),
+            state.aiName
                 ? "ONLINE"
                 : "OFFLINE"
         );
+
+
+        const status =
+            $(".ai-status");
+
+        if (status) {
+            status.textContent =
+                state.aiActive
+                    ? "AI ACTIVE"
+                    : state.aiName
+                        ? "AI ONLINE"
+                        : "AI OFFLINE";
+        }
     }
 
+
     function saveAIName() {
+
         const input =
             $("#aiNameInput");
 
@@ -971,282 +946,431 @@
             return;
         }
 
+
         const name =
             input.value
-                .replace(/\s+/g, " ")
                 .trim()
+                .replace(/\s+/g, " ")
                 .slice(0, 20);
 
+
         if (!name) {
+
             showNotification(
                 "ENTER AN AI DESIGNATION"
             );
 
-            input.focus();
-
             return;
         }
 
-        state.aiName =
-            name;
+
+        state.aiName = name;
 
         saveState();
+
         updateAIUI();
 
         input.value = "";
 
+
         showNotification(
-            `AI LINK → ${name.toUpperCase()}`
+            `AI DESIGNATION → ${name.toUpperCase()}`
         );
     }
 
+
+    function toggleAI() {
+
+        if (!state.aiName) {
+
+            showNotification(
+                "CONFIGURE AI FIRST"
+            );
+
+            return;
+        }
+
+
+        state.aiActive =
+            !state.aiActive;
+
+
+        const core =
+            $(".ai-core");
+
+        if (core) {
+            core.classList.toggle(
+                "active",
+                state.aiActive
+            );
+        }
+
+
+        updateAIUI();
+
+
+        showNotification(
+            state.aiActive
+                ? `${state.aiName.toUpperCase()} → ACTIVE`
+                : `${state.aiName.toUpperCase()} → STANDBY`
+        );
+    }
+
+
+    function commandAI() {
+
+        if (!state.aiName) {
+
+            showNotification(
+                "AI NOT CONFIGURED"
+            );
+
+            return;
+        }
+
+
+        showNotification(
+            `${state.aiName.toUpperCase()} → SYSTEM NOMINAL`
+        );
+
+
+        state.aiActive = true;
+
+
+        const core =
+            $(".ai-core");
+
+        if (core) {
+            core.classList.add("active");
+        }
+
+
+        updateAIUI();
+    }
+
+
     function initializeAI() {
-        const saveButton =
+
+        const save =
             $("#saveAI");
 
-        const input =
-            $("#aiNameInput");
-
-        const command =
-            $("#commandAI");
-
-        if (saveButton) {
-            saveButton.addEventListener(
+        if (save) {
+            save.addEventListener(
                 "click",
                 saveAIName
             );
         }
 
+
+        const input =
+            $("#aiNameInput");
+
         if (input) {
+
             input.addEventListener(
                 "keydown",
-                (event) => {
-                    if (
-                        event.key ===
-                        "Enter"
-                    ) {
-                        event.preventDefault();
+                event => {
 
+                    if (
+                        event.key === "Enter"
+                    ) {
                         saveAIName();
                     }
                 }
             );
         }
 
+
+        const command =
+            $("#commandAI");
+
         if (command) {
             command.addEventListener(
                 "click",
-                () => {
-                    if (!state.aiName) {
-                        showNotification(
-                            "AI NOT CONFIGURED"
-                        );
-
-                        return;
-                    }
-
-                    showNotification(
-                        `${state.aiName.toUpperCase()} → SYSTEM NOMINAL`
-                    );
-                }
+                commandAI
             );
         }
+
+
+        const core =
+            $(".ai-core");
+
+        if (core) {
+            core.addEventListener(
+                "click",
+                toggleAI
+            );
+        }
+
 
         updateAIUI();
     }
 
-    /* ========================================================
+
+    /* =====================================================
        MASK INTERACTION
-       ======================================================== */
+    ===================================================== */
 
-    function initializeMaskInteraction() {
-        const mask =
-            $(".mask-core");
+    function initializeMask() {
 
-        if (!mask) {
+        const eyes =
+            $$(".mask-eye");
+
+        if (!eyes.length) {
             return;
         }
 
-        if (
-            window.matchMedia(
-                "(pointer: coarse)"
-            ).matches
-        ) {
-            return;
-        }
 
-        mask.parentElement?.addEventListener(
-            "pointermove",
-            (event) => {
-                const rect =
-                    mask.parentElement.getBoundingClientRect();
+        eyes.forEach(eye => {
 
-                const x =
-                    (
-                        event.clientX -
-                        rect.left
-                    ) / rect.width;
+            eye.addEventListener(
+                "click",
+                () => {
 
-                const rotation =
-                    (x - 0.5) * 14;
-
-                mask.style.setProperty(
-                    "--mask-rotation",
-                    `${rotation}deg`
-                );
-            }
-        );
-
-        mask.parentElement?.addEventListener(
-            "pointerleave",
-            () => {
-                mask.style.setProperty(
-                    "--mask-rotation",
-                    "0deg"
-                );
-            }
-        );
-    }
-
-    /* ========================================================
-       TELEMETRY
-       ======================================================== */
-
-    function initializeTelemetry() {
-        const batteryElements = $$(
-            "[data-telemetry='battery']"
-        );
-
-        const connectionElements = $$(
-            "[data-telemetry='connection']"
-        );
-
-        if (
-            !batteryElements.length &&
-            !connectionElements.length
-        ) {
-            return;
-        }
-
-        function update() {
-            state.battery =
-                Math.max(
-                    65,
-                    Math.min(
-                        99,
-                        state.battery +
-                            (
-                                Math.random() >
-                                0.7
-                                    ? -1
-                                    : 0
-                            )
-                    )
-                );
-
-            state.connection =
-                Math.floor(
-                    1 +
-                    Math.random() * 4
-                );
-
-            batteryElements.forEach(
-                (element) => {
-                    element.textContent =
-                        `${state.battery}%`;
-                }
-            );
-
-            connectionElements.forEach(
-                (element) => {
-                    element.textContent =
-                        `${state.connection}ms`;
-                }
-            );
-        }
-
-        update();
-
-        setInterval(
-            update,
-            3500
-        );
-    }
-
-    /* ========================================================
-       KEYBOARD CONTROL
-       ======================================================== */
-
-    function initializeKeyboard() {
-        document.addEventListener(
-            "keydown",
-            (event) => {
-                const active =
-                    document.activeElement;
-
-                const typing =
-                    active &&
-                    (
-                        active.tagName ===
-                            "INPUT" ||
-                        active.tagName ===
-                            "TEXTAREA" ||
-                        active.isContentEditable
+                    eye.classList.add(
+                        "mask-eye-flash"
                     );
 
-                if (typing) {
+                    showNotification(
+                        "MASK OPTICS → ACTIVE"
+                    );
+
+
+                    setTimeout(() => {
+                        eye.classList.remove(
+                            "mask-eye-flash"
+                        );
+                    }, 500);
+                }
+            );
+        });
+    }
+
+
+    /* =====================================================
+       SYNC NODES
+    ===================================================== */
+
+    function initializeSyncNodes() {
+
+        const nodes =
+            $$(".sync-node");
+
+        nodes.forEach(node => {
+
+            node.addEventListener(
+                "click",
+                () => {
+
+                    nodes.forEach(
+                        item =>
+                            item.classList
+                                .remove("active")
+                    );
+
+                    node.classList.add(
+                        "active"
+                    );
+
+
+                    const label =
+                        $("strong", node);
+
+                    const name =
+                        label
+                            ? label.textContent
+                            : "SYSTEM";
+
+
+                    showNotification(
+                        `${name.toUpperCase()} → LINK ACTIVE`
+                    );
+                }
+            );
+        });
+    }
+
+
+    /* =====================================================
+       FEATURE ROW INTERACTION
+    ===================================================== */
+
+    function initializeFeatureRows() {
+
+        $$(".feature-row").forEach(
+            row => {
+
+                row.addEventListener(
+                    "click",
+                    () => {
+
+                        const title =
+                            $("h3", row);
+
+                        if (!title) {
+                            return;
+                        }
+
+                        showNotification(
+                            `${title.textContent.toUpperCase()} → READY`
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+
+    /* =====================================================
+       ARCHITECTURE CARDS
+    ===================================================== */
+
+    function initializeArchitectureCards() {
+
+        $$(".architecture-card").forEach(
+            card => {
+
+                card.addEventListener(
+                    "click",
+                    () => {
+
+                        const title =
+                            $("h3", card);
+
+                        if (!title) {
+                            return;
+                        }
+
+                        showNotification(
+                            `${title.textContent.toUpperCase()} → MODULE ONLINE`
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+
+    /* =====================================================
+       SYSTEM CARDS
+    ===================================================== */
+
+    function initializeSystemCards() {
+
+        $$(".system-card").forEach(
+            card => {
+
+                card.addEventListener(
+                    "click",
+                    () => {
+
+                        const title =
+                            $("h3", card);
+
+                        if (!title) {
+                            return;
+                        }
+
+                        showNotification(
+                            `${title.textContent.toUpperCase()} → SYSTEM READY`
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+
+    /* =====================================================
+       BUTTON FEEDBACK
+    ===================================================== */
+
+    function initializeButtonFeedback() {
+
+        $$(".button").forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        button.id ===
+                        "saveAI"
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        button.id ===
+                        "commandAI"
+                    ) {
+                        return;
+                    }
+
+                    const text =
+                        button.textContent
+                            .trim()
+                            .toUpperCase();
+
+                    if (text) {
+                        showNotification(
+                            `${text} → EXECUTED`
+                        );
+                    }
+                }
+            );
+        });
+    }
+
+
+    /* =====================================================
+       KEYBOARD SHORTCUTS
+    ===================================================== */
+
+    function initializeKeyboard() {
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.target.tagName ===
+                    "INPUT"
+                ) {
                     return;
                 }
+
 
                 switch (
                     event.key.toLowerCase()
                 ) {
+
                     case "1":
-                        setHUD(
-                            "MINIMAL"
-                        );
+                        setHUD("MINIMAL");
                         break;
 
                     case "2":
-                        setHUD(
-                            "TACTICAL"
-                        );
+                        setHUD("TACTICAL");
                         break;
 
                     case "3":
-                        setHUD(
-                            "STEALTH"
-                        );
+                        setHUD("STEALTH");
                         break;
 
                     case "4":
-                        setHUD(
-                            "DEVELOPER"
-                        );
+                        setHUD("DEVELOPER");
                         break;
 
-                    case "q":
-                        setSuit(
-                            "CLASSIC"
-                        );
+                    case "s":
+                        setSuit("SHADOW");
                         break;
 
-                    case "w":
-                        setSuit(
-                            "SHADOW"
-                        );
+                    case "a":
+                        setSuit("APEX");
                         break;
 
-                    case "e":
-                        setSuit(
-                            "APEX"
-                        );
-                        break;
-
-                    case "r":
-                        setSuit(
-                            "CUSTOM"
-                        );
+                    case "c":
+                        setSuit("CLASSIC");
                         break;
 
                     default:
@@ -1256,194 +1380,96 @@
         );
     }
 
-    /* ========================================================
-       SYSTEM RESET
-       ======================================================== */
 
-    function resetSystem() {
-        try {
-            localStorage.removeItem(
-                STORAGE_KEY
-            );
-        } catch (error) {
-            console.warn(
-                "SPIDER-LINK reset error:",
-                error
-            );
+    /* =====================================================
+       SCROLL EVENTS
+    ===================================================== */
+
+    function initializeScroll() {
+
+        let ticking = false;
+
+
+        function update() {
+
+            updateScrollProgress();
+            updateNavbar();
+
+            ticking = false;
         }
 
-        state.suit =
-            "CLASSIC";
 
-        state.hud =
-            "MINIMAL";
+        window.addEventListener(
+            "scroll",
+            () => {
 
-        state.aiName =
-            "";
+                if (!ticking) {
 
-        setSuit(
-            "CLASSIC",
-            false
+                    window.requestAnimationFrame(
+                        update
+                    );
+
+                    ticking = true;
+                }
+            },
+            {
+                passive: true
+            }
         );
 
-        setHUD(
-            "MINIMAL",
-            false
-        );
 
-        updateAIUI();
-
-        showNotification(
-            "SYSTEM RESET COMPLETE"
-        );
+        update();
     }
 
-    /* ========================================================
-       PUBLIC DEBUG API
-       ======================================================== */
+
+    /* =====================================================
+       DEBUG API
+    ===================================================== */
 
     window.SPIDERLINK = {
-        version: "0.2.0",
 
         state,
 
         setSuit,
+
         setHUD,
 
-        reset:
-            resetSystem,
+        saveAIName,
 
-        notify:
-            showNotification
+        showNotification,
+
+        reset() {
+
+            localStorage.removeItem(
+                STORAGE_KEY
+            );
+
+            location.reload();
+        }
     };
 
-    /* ========================================================
-       BOOT
-       ======================================================== */
 
-    async function runBoot() {
-        const splash =
-            $("#splashScreen");
+    /* =====================================================
+       MASTER INITIALIZATION
+    ===================================================== */
 
-        if (!splash) {
-            return;
-        }
-
-        const status =
-            $("#splashStatus");
-
-        const percent =
-            $("#splashPercent");
-
-        const progress =
-            $("#splashProgressBar");
-
-        const sequence = [
-            [
-                "INITIALIZING CORE",
-                12
-            ],
-            [
-                "CHECKING INTERFACE",
-                27
-            ],
-            [
-                "LOADING INTERACTION ENGINE",
-                43
-            ],
-            [
-                "LINKING HUD",
-                58
-            ],
-            [
-                "SYNCING SUIT",
-                73
-            ],
-            [
-                "VERIFYING AI",
-                88
-            ],
-            [
-                "SYSTEM READY",
-                100
-            ]
-        ];
-
-        for (
-            const [message, value]
-            of sequence
-        ) {
-            if (status) {
-                status.textContent =
-                    message;
-            }
-
-            if (percent) {
-                percent.textContent =
-                    `${value}%`;
-            }
-
-            if (progress) {
-                progress.style.width =
-                    `${value}%`;
-            }
-
-            await new Promise(
-                (resolve) =>
-                    setTimeout(
-                        resolve,
-                        170
-                    )
-            );
-        }
-
-        await new Promise(
-            (resolve) =>
-                setTimeout(
-                    resolve,
-                    350
-                )
-        );
-
-        splash.classList.add(
-            "hidden"
-        );
-
-        splash.setAttribute(
-            "aria-hidden",
-            "true"
-        );
-    }
-
-    /* ========================================================
-       INITIALIZATION
-       ======================================================== */
-
-    async function initialize() {
-        console.log(
-            "%c🕷️ SPIDER-LINK v0.2.0",
-            "font-size:22px;font-weight:900;"
-        );
+    async function initializeSPIDERLINK() {
 
         loadState();
 
-        initializeScrollProgress();
+        initializeScroll();
 
-        initializeScrollReveal();
-
-        initializeStagger();
+        initializeReveal();
 
         initializeNavigation();
 
-        initializeActiveNavigation();
+        initializeMouseTracking();
 
-        initializeCursorGlow();
-
-        initializeCardTilt();
+        initializeCardGlow();
 
         initializeMagneticButtons();
 
-        initializeRipples();
+        initializeHeroParallax();
 
         initializeSuits();
 
@@ -1451,49 +1477,75 @@
 
         initializeAI();
 
-        initializeMaskInteraction();
+        initializeMask();
 
-        initializeTelemetry();
+        initializeSyncNodes();
+
+        initializeFeatureRows();
+
+        initializeArchitectureCards();
+
+        initializeSystemCards();
+
+        initializeButtonFeedback();
 
         initializeKeyboard();
 
-        await runBoot();
+
+        await runSplash();
+
 
         showNotification(
-            "SPIDER-LINK ONLINE"
+            "SPIDER-LINK INTERACTIVE ENGINE v0.2 ONLINE"
+        );
+
+
+        console.log(
+            "%cSPIDER-LINK",
+            "color:#ff2038;font-size:20px;font-weight:bold;"
         );
 
         console.log(
-            "SYSTEM → ONLINE"
+            "Interactive Engine v0.2 initialized."
         );
 
         console.log(
-            `SUIT → ${state.suit}`
+            "Suit:",
+            state.suit
         );
 
         console.log(
-            `HUD → ${state.hud}`
+            "HUD:",
+            state.hud
         );
 
         console.log(
-            `AI → ${
-                state.aiName ||
-                "UNCONFIGURED"
-            }`
+            "AI:",
+            state.aiName || "UNCONFIGURED"
         );
     }
+
+
+    /* =====================================================
+       START
+    ===================================================== */
 
     if (
         document.readyState ===
         "loading"
     ) {
+
         document.addEventListener(
             "DOMContentLoaded",
-            initialize,
-            { once: true }
+            initializeSPIDERLINK,
+            {
+                once: true
+            }
         );
+
     } else {
-        initialize();
+
+        initializeSPIDERLINK();
     }
 
 })();
