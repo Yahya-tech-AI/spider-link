@@ -1,13 +1,13 @@
-  /*
-   * ============================================================
-   * SPIDER-LINK
-   * Original futuristic wearable-tech interface
-   * Version: 0.2.0
-   *
-   * This is a software/UI prototype.
-   * No dangerous hardware/projectile systems are implemented.
-   * ============================================================
-   */
+/*
+ * ============================================================
+ * SPIDEY-LINK
+ * Original futuristic wearable-tech interface
+ * Version: 0.2.0
+ *
+ * This is a software/UI prototype.
+ * No dangerous hardware/projectile systems are implemented.
+ * ============================================================
+ */
 
 (() => {
     "use strict";
@@ -16,7 +16,7 @@
        CONFIG
     ===================================================== */
 
-    const STORAGE_KEY = "spiderlink_v2";
+    const STORAGE_KEY = "spidey_link_v2";
 
     const VALID_SUITS = [
         "CLASSIC",
@@ -32,7 +32,6 @@
         "DEVELOPER"
     ];
 
-
     /* =====================================================
        STATE
     ===================================================== */
@@ -44,7 +43,6 @@
         aiActive: false
     };
 
-
     /* =====================================================
        HELPERS
     ===================================================== */
@@ -55,13 +53,11 @@
     const $$ = (selector, root = document) =>
         Array.from(root.querySelectorAll(selector));
 
-
     function safeText(element, value) {
         if (element) {
             element.textContent = value;
         }
     }
-
 
     function formatName(value) {
         return String(value)
@@ -69,7 +65,6 @@
             .replace(/_/g, " ")
             .replace(/\b\w/g, char => char.toUpperCase());
     }
-
 
     /* =====================================================
        STORAGE
@@ -102,14 +97,17 @@
                     .slice(0, 20);
             }
 
+            if (typeof saved.aiActive === "boolean") {
+                state.aiActive = saved.aiActive;
+            }
+
         } catch (error) {
             console.warn(
-                "SPIDER-LINK storage reset.",
+                "SPIDEY-LINK storage reset.",
                 error
             );
         }
     }
-
 
     function saveState() {
         try {
@@ -118,24 +116,24 @@
                 JSON.stringify({
                     suit: state.suit,
                     hud: state.hud,
-                    aiName: state.aiName
+                    aiName: state.aiName,
+                    aiActive: state.aiActive
                 })
             );
+
         } catch (error) {
             console.warn(
-                "SPIDER-LINK could not save state.",
+                "SPIDEY-LINK could not save state.",
                 error
             );
         }
     }
-
 
     /* =====================================================
        NOTIFICATION ENGINE
     ===================================================== */
 
     let notificationTimer = null;
-
 
     function showNotification(message) {
 
@@ -156,7 +154,6 @@
             notification.classList.remove("show");
         }, 2400);
     }
-
 
     /* =====================================================
        SPLASH BOOT
@@ -234,7 +231,6 @@
         });
     }
 
-
     /* =====================================================
        SCROLL PROGRESS
     ===================================================== */
@@ -246,6 +242,7 @@
             window.innerHeight;
 
         if (documentHeight <= 0) {
+
             document.documentElement.style
                 .setProperty(
                     "--scroll-progress",
@@ -265,7 +262,6 @@
             );
     }
 
-
     /* =====================================================
        NAVBAR SCROLL STATE
     ===================================================== */
@@ -284,24 +280,81 @@
         );
     }
 
-
     /* =====================================================
        SCROLL REVEAL
+       Automatically adds reveal classes to the HTML.
+       This fixes the problem where the HTML had no
+       .reveal elements.
     ===================================================== */
 
     function initializeReveal() {
 
-        const elements = $$(".reveal, .reveal-left, .reveal-right");
+        const revealGroups = [
+            ".section-heading",
+            ".hero-content",
+            ".hero-visual",
+            ".hero-meta",
+            ".hero-actions",
+            ".system-card",
+            ".mask-display",
+            ".feature-row",
+            ".hud-options",
+            ".hud-console",
+            ".suit-card",
+            ".selected-suit-panel",
+            ".ai-panel",
+            ".sync-node",
+            ".architecture-card",
+            ".safety-panel"
+        ];
+
+        revealGroups.forEach(selector => {
+
+            $$(selector).forEach(element => {
+
+                if (
+                    !element.classList.contains("reveal") &&
+                    !element.classList.contains("reveal-left") &&
+                    !element.classList.contains("reveal-right")
+                ) {
+                    element.classList.add("reveal");
+                }
+            });
+        });
+
+        const elements =
+            $$(".reveal, .reveal-left, .reveal-right");
 
         if (!elements.length) {
             return;
         }
+
+        elements.forEach((element, index) => {
+
+            const delay =
+                Math.min(index * 45, 450);
+
+            element.style.setProperty(
+                "--reveal-delay",
+                `${delay}ms`
+            );
+        });
 
         if (
             window.matchMedia(
                 "(prefers-reduced-motion: reduce)"
             ).matches
         ) {
+
+            elements.forEach(element => {
+                element.classList.add("visible");
+            });
+
+            return;
+        }
+
+        if (!("IntersectionObserver" in window)) {
+
             elements.forEach(element => {
                 element.classList.add("visible");
             });
@@ -341,7 +394,6 @@
         });
     }
 
-
     /* =====================================================
        ACTIVE NAVIGATION
     ===================================================== */
@@ -370,6 +422,7 @@
                     document.querySelector(href);
 
                 if (section) {
+
                     sections.push({
                         section,
                         link
@@ -394,11 +447,13 @@
             );
         });
 
-
         if (!sections.length) {
             return;
         }
 
+        if (!("IntersectionObserver" in window)) {
+            return;
+        }
 
         const observer =
             new IntersectionObserver(
@@ -423,6 +478,7 @@
                                 );
 
                             if (match) {
+
                                 match.link
                                     .classList
                                     .add("active");
@@ -438,12 +494,10 @@
                 }
             );
 
-
         sections.forEach(item => {
             observer.observe(item.section);
         });
     }
-
 
     /* =====================================================
        MOUSE TRACKING
@@ -494,14 +548,14 @@
         );
     }
 
-
     /* =====================================================
        CARD POINTER GLOW
     ===================================================== */
 
     function initializeCardGlow() {
 
-        const cards = $$(".system-card");
+        const cards =
+            $$(".system-card, .suit-card, .architecture-card");
 
         if (!cards.length) {
             return;
@@ -515,6 +569,13 @@
 
                     const rect =
                         card.getBoundingClientRect();
+
+                    if (
+                        rect.width === 0 ||
+                        rect.height === 0
+                    ) {
+                        return;
+                    }
 
                     const x =
                         ((event.clientX -
@@ -541,7 +602,6 @@
             );
         });
     }
-
 
     /* =====================================================
        MAGNETIC BUTTONS
@@ -599,7 +659,6 @@
         });
     }
 
-
     /* =====================================================
        HERO PARALLAX
     ===================================================== */
@@ -650,16 +709,19 @@
                     $(".card-bottom", visual);
 
                 if (core) {
+
                     core.style.transform =
                         `translate(${x * 12}px, ${y * 12}px)`;
                 }
 
                 if (cardTop) {
+
                     cardTop.style.transform =
                         `translate(${x * -10}px, ${y * -10}px)`;
                 }
 
                 if (cardBottom) {
+
                     cardBottom.style.transform =
                         `translate(${x * 8}px, ${y * 8}px)`;
                 }
@@ -694,7 +756,6 @@
         );
     }
 
-
     /* =====================================================
        SUIT SYSTEM
     ===================================================== */
@@ -719,7 +780,6 @@
 
         state.suit = normalized;
 
-
         $$(".suit-card").forEach(card => {
 
             const cardSuit =
@@ -739,13 +799,13 @@
                 $(".suit-status", card);
 
             if (status) {
+
                 status.textContent =
                     active
                         ? "SELECTED"
                         : "AVAILABLE";
             }
         });
-
 
         safeText(
             $("#heroSuitName"),
@@ -762,17 +822,15 @@
             state.suit
         );
 
-
         saveState();
 
-
         if (notify) {
+
             showNotification(
-                `SPIDER-LINK SUIT → ${state.suit}`
+                `SPIDEY-LINK SUIT → ${state.suit}`
             );
         }
     }
-
 
     function initializeSuits() {
 
@@ -792,13 +850,11 @@
             );
         });
 
-
         setSuit(
             state.suit,
             false
         );
     }
-
 
     /* =====================================================
        HUD SYSTEM
@@ -824,7 +880,6 @@
 
         state.hud = normalized;
 
-
         $$(".hud-option").forEach(
             button => {
 
@@ -841,32 +896,29 @@
             }
         );
 
-
         safeText(
             $("#hudMode"),
             normalized
         );
 
-
         const consoleDisplay =
             $(".console-display");
 
         if (consoleDisplay) {
+
             consoleDisplay.dataset.mode =
                 normalized;
         }
 
-
         saveState();
 
-
         if (notify) {
+
             showNotification(
                 `HUD MODE → ${normalized}`
             );
         }
     }
-
 
     function initializeHUD() {
 
@@ -885,13 +937,11 @@
             }
         );
 
-
         setHUD(
             state.hud,
             false
         );
     }
-
 
     /* =====================================================
        AI SYSTEM
@@ -903,7 +953,6 @@
             state.aiName ||
             "UNCONFIGURED";
 
-
         safeText(
             $("#heroAIName"),
             name
@@ -914,7 +963,6 @@
             name
         );
 
-
         safeText(
             $("#hudAI"),
             state.aiName
@@ -922,11 +970,11 @@
                 : "OFFLINE"
         );
 
-
         const status =
             $(".ai-status");
 
         if (status) {
+
             status.textContent =
                 state.aiActive
                     ? "AI ACTIVE"
@@ -934,8 +982,18 @@
                         ? "AI ONLINE"
                         : "AI OFFLINE";
         }
-    }
 
+        const core =
+            $(".ai-core");
+
+        if (core) {
+
+            core.classList.toggle(
+                "active",
+                state.aiActive
+            );
+        }
+    }
 
     function saveAIName() {
 
@@ -946,13 +1004,11 @@
             return;
         }
 
-
         const name =
             input.value
                 .trim()
                 .replace(/\s+/g, " ")
                 .slice(0, 20);
-
 
         if (!name) {
 
@@ -963,8 +1019,8 @@
             return;
         }
 
-
         state.aiName = name;
+        state.aiActive = false;
 
         saveState();
 
@@ -972,12 +1028,10 @@
 
         input.value = "";
 
-
         showNotification(
             `AI DESIGNATION → ${name.toUpperCase()}`
         );
     }
-
 
     function toggleAI() {
 
@@ -990,24 +1044,12 @@
             return;
         }
 
-
         state.aiActive =
             !state.aiActive;
 
-
-        const core =
-            $(".ai-core");
-
-        if (core) {
-            core.classList.toggle(
-                "active",
-                state.aiActive
-            );
-        }
-
+        saveState();
 
         updateAIUI();
-
 
         showNotification(
             state.aiActive
@@ -1015,7 +1057,6 @@
                 : `${state.aiName.toUpperCase()} → STANDBY`
         );
     }
-
 
     function commandAI() {
 
@@ -1028,26 +1069,16 @@
             return;
         }
 
+        state.aiActive = true;
+
+        saveState();
+
+        updateAIUI();
 
         showNotification(
             `${state.aiName.toUpperCase()} → SYSTEM NOMINAL`
         );
-
-
-        state.aiActive = true;
-
-
-        const core =
-            $(".ai-core");
-
-        if (core) {
-            core.classList.add("active");
-        }
-
-
-        updateAIUI();
     }
-
 
     function initializeAI() {
 
@@ -1055,12 +1086,12 @@
             $("#saveAI");
 
         if (save) {
+
             save.addEventListener(
                 "click",
                 saveAIName
             );
         }
-
 
         const input =
             $("#aiNameInput");
@@ -1080,32 +1111,30 @@
             );
         }
 
-
         const command =
             $("#commandAI");
 
         if (command) {
+
             command.addEventListener(
                 "click",
                 commandAI
             );
         }
 
-
         const core =
             $(".ai-core");
 
         if (core) {
+
             core.addEventListener(
                 "click",
                 toggleAI
             );
         }
 
-
         updateAIUI();
     }
-
 
     /* =====================================================
        MASK INTERACTION
@@ -1119,7 +1148,6 @@
         if (!eyes.length) {
             return;
         }
-
 
         eyes.forEach(eye => {
 
@@ -1135,17 +1163,17 @@
                         "MASK OPTICS → ACTIVE"
                     );
 
-
                     setTimeout(() => {
+
                         eye.classList.remove(
                             "mask-eye-flash"
                         );
+
                     }, 500);
                 }
             );
         });
     }
-
 
     /* =====================================================
        SYNC NODES
@@ -1172,7 +1200,6 @@
                         "active"
                     );
 
-
                     const label =
                         $("strong", node);
 
@@ -1181,7 +1208,6 @@
                             ? label.textContent
                             : "SYSTEM";
 
-
                     showNotification(
                         `${name.toUpperCase()} → LINK ACTIVE`
                     );
@@ -1189,7 +1215,6 @@
             );
         });
     }
-
 
     /* =====================================================
        FEATURE ROW INTERACTION
@@ -1220,7 +1245,6 @@
         );
     }
 
-
     /* =====================================================
        ARCHITECTURE CARDS
     ===================================================== */
@@ -1249,7 +1273,6 @@
             }
         );
     }
-
 
     /* =====================================================
        SYSTEM CARDS
@@ -1280,6 +1303,56 @@
         );
     }
 
+    /* =====================================================
+       CLICK RIPPLE
+    ===================================================== */
+
+    function createRipple(event, element) {
+
+        if (!element) {
+            return;
+        }
+
+        const ripple =
+            document.createElement("span");
+
+        ripple.className =
+            "click-ripple";
+
+        const rect =
+            element.getBoundingClientRect();
+
+        ripple.style.left =
+            `${event.clientX - rect.left}px`;
+
+        ripple.style.top =
+            `${event.clientY - rect.top}px`;
+
+        element.appendChild(ripple);
+
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    }
+
+    function initializeRipple() {
+
+        const interactive =
+            $$(".button, .suit-card, .hud-option, .sync-node");
+
+        interactive.forEach(element => {
+
+            element.addEventListener(
+                "click",
+                event => {
+                    createRipple(
+                        event,
+                        element
+                    );
+                }
+            );
+        });
+    }
 
     /* =====================================================
        BUTTON FEEDBACK
@@ -1313,6 +1386,7 @@
                             .toUpperCase();
 
                     if (text) {
+
                         showNotification(
                             `${text} → EXECUTED`
                         );
@@ -1321,7 +1395,6 @@
             );
         });
     }
-
 
     /* =====================================================
        KEYBOARD SHORTCUTS
@@ -1333,13 +1406,19 @@
             "keydown",
             event => {
 
+                const target =
+                    event.target;
+
                 if (
-                    event.target.tagName ===
-                    "INPUT"
+                    target &&
+                    (
+                        target.tagName === "INPUT" ||
+                        target.tagName === "TEXTAREA" ||
+                        target.isContentEditable
+                    )
                 ) {
                     return;
                 }
-
 
                 switch (
                     event.key.toLowerCase()
@@ -1380,7 +1459,6 @@
         );
     }
 
-
     /* =====================================================
        SCROLL EVENTS
     ===================================================== */
@@ -1389,7 +1467,6 @@
 
         let ticking = false;
 
-
         function update() {
 
             updateScrollProgress();
@@ -1397,7 +1474,6 @@
 
             ticking = false;
         }
-
 
         window.addEventListener(
             "scroll",
@@ -1411,22 +1487,21 @@
 
                     ticking = true;
                 }
+
             },
             {
                 passive: true
             }
         );
 
-
         update();
     }
-
 
     /* =====================================================
        DEBUG API
     ===================================================== */
 
-    window.SPIDERLINK = {
+    window.SPIDEYLINK = {
 
         state,
 
@@ -1448,12 +1523,11 @@
         }
     };
 
-
     /* =====================================================
        MASTER INITIALIZATION
     ===================================================== */
 
-    async function initializeSPIDERLINK() {
+    async function initializeSPIDEYLINK() {
 
         loadState();
 
@@ -1487,26 +1561,25 @@
 
         initializeSystemCards();
 
+        initializeRipple();
+
         initializeButtonFeedback();
 
         initializeKeyboard();
 
-
         await runSplash();
 
-
         showNotification(
-            "SPIDER-LINK INTERACTIVE ENGINE v0.2 ONLINE"
+            "SPIDEY-LINK INTERACTIVE ENGINE v0.2 ONLINE"
         );
 
-
         console.log(
-            "%cSPIDER-LINK",
+            "%cSPIDEY-LINK",
             "color:#ff2038;font-size:20px;font-weight:bold;"
         );
 
         console.log(
-            "Interactive Engine v0.2 initialized."
+            "SPIDEY-LINK Interactive Engine v0.2 initialized."
         );
 
         console.log(
@@ -1523,8 +1596,14 @@
             "AI:",
             state.aiName || "UNCONFIGURED"
         );
-    }
 
+        console.log(
+            "AI Status:",
+            state.aiActive
+                ? "ACTIVE"
+                : "STANDBY"
+        );
+    }
 
     /* =====================================================
        START
@@ -1537,7 +1616,7 @@
 
         document.addEventListener(
             "DOMContentLoaded",
-            initializeSPIDERLINK,
+            initializeSPIDEYLINK,
             {
                 once: true
             }
@@ -1545,7 +1624,7 @@
 
     } else {
 
-        initializeSPIDERLINK();
+        initializeSPIDEYLINK();
     }
 
 })();
