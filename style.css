@@ -2878,3 +2878,22 @@ body::after {
     transition: none;
   }
 }
+/* =========================================================
+   SPIDEY-LINK — REVEAL VISIBILITY FIX
+========================================================= */
+
+.reveal,
+.reveal-left,
+.reveal-right {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+}
+
+.reveal.visible,
+.reveal-left.visible,
+.reveal-right.visible {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+}
